@@ -1,0 +1,97 @@
+#!/bin/bash
+set -e
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$REPO_ROOT"
+
+echo "=========================================================="
+echo " SMVDU TITAN-X: Full SoC Static Linting (Verilator 5.020) "
+echo "=========================================================="
+
+INCDIRS=(
+    "-Iincludes"
+    "-Ibackend/rv_core_top"
+    "-Ibackend/rv_execute"
+    "-Ibackend/rv_mem"
+    "-Ibackend/rv_writeback"
+    "-Ibackend/rv_regfile"
+    "-Ibackend/rv_csr"
+    "-Ibackend/rv_mmu"
+    "-Ibackend/rv_tlb"
+    "-Ibackend/rv_ptw"
+    "-Ibackend/rv_pmp"
+    "-Ibackend/rv_fpu"
+    "-Ibackend/rv_dcache"
+    "-Ibackend/rv_debug"
+    "-Ibackend/rv_monitor_core"
+    "-Ibackend/clint"
+    "-Ibackend/plic"
+    "-Ifrontend/rv_fetch"
+    "-Ifrontend/rv_decode"
+    "-Ifrontend/rv_icache"
+    "-Ifrontend/rv_bpu"
+    "-Iinterconnect/axi4_crossbar"
+    "-Iinterconnect/axi4_to_ahb"
+    "-Iinterconnect/ahb_to_apb"
+    "-Iinterconnect/interconnect_mpu"
+    "-Iinterconnect/qos_controller"
+    "-Iinterconnect/mmu_arbiter"
+    "-Imemory/l2_cache_top"
+    "-Imemory/l2_cache_ctrl"
+    "-Imemory/l2_tag_array"
+    "-Imemory/l2_data_array"
+    "-Imemory/l2_snoop_filter"
+    "-Imemory/ddr_ctrl_top"
+    "-Imemory/ddr_scheduler"
+    "-Imemory/ddr_phy_if"
+    "-Imemory/sram_32x64_180nm"
+    "-Imemory/sram_512kx8_180nm"
+    "-Imemory/mbist"
+    "-Iperipherals/uart_16550"
+    "-Iperipherals/can_controller"
+    "-Iperipherals/gpio_ctrl"
+    "-Iperipherals/watchdog_timer"
+    "-Iperipherals/spi_master"
+    "-Iperipherals/i2c_master"
+    "-Iperipherals/rtc"
+    "-Iperipherals/gem_ethernet"
+    "-Iperipherals/gem_sgmii_pcs"
+    "-Iperipherals/pcie_top"
+    "-Iperipherals/pcie_pipe_if"
+    "-Iperipherals/trng"
+    "-Iperipherals/sha256_engine"
+    "-Iperipherals/aes_engine"
+    "-Isecurity/secure_boot"
+    "-Isecurity/drbg"
+    "-Isecurity/ecdsa_engine"
+    "-Isecurity/efuse_ctrl"
+    "-Isecurity/envm_ctrl"
+    "-Istorage/usb_otg"
+    "-Istorage/mmc_controller"
+    "-Istorage/qspi_controller"
+    "-Ivideo/vdma"
+    "-Ivideo/mipi_csi2_rx"
+    "-Ivideo/isp_pipeline"
+    "-Ivideo/hdmi_ctrl"
+    "-Itop/axi_sram"
+    "-Itop/axi_rom"
+    "-Itop/titan_x_top"
+    "-Icommon/sync_cell"
+    "-Icommon/reset_sync"
+    "-Icommon/cdc_sync"
+    "-Icommon/fifo_sync"
+    "-Icommon/fifo_async"
+    "-Icommon"
+)
+
+# Run Verilator lint-only on top-level SoC
+verilator --lint-only \
+    -Wall \
+    -Wno-PINMISSING \
+    -Wno-DECLFILENAME \
+    -Wno-TIMESCALEMOD \
+    "${INCDIRS[@]}" \
+    top/titan_x_top/titan_x_top.v \
+    2>&1 | tee clean_verify/reports/verilator_lint_raw.log
+
+echo "Lint completed. Inspecting log..."
