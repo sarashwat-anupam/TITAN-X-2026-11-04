@@ -460,7 +460,7 @@ module l2_cache_ctrl #(
                 ST_EVICT_BUF: begin
                     evict_cnt <= evict_cnt + 4'd1;
                     if (evict_cnt > 4'd0) begin
-                        evict_buffer[evict_cnt - 4'd1] <= sram_dout;
+                        evict_buffer[evict_cnt[2:0] - 3'd1] <= sram_dout;
                     end
                     if (evict_cnt < 4'd7) begin
                         sram_cs   <= 1'b1;
@@ -508,7 +508,7 @@ module l2_cache_ctrl #(
                         end else begin
                             evict_cnt <= evict_cnt + 4'd1;
                             m_wvalid  <= 1'b1;
-                            m_wdata   <= evict_buffer[evict_cnt + 4'd1];
+                            m_wdata   <= evict_buffer[evict_cnt[2:0] + 3'd1];
                             m_wstrb   <= 8'hFF;
                             m_wlast   <= (evict_cnt + 4'd1 == 4'd7);
                         end

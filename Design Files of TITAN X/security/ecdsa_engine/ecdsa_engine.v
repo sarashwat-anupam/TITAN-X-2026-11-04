@@ -159,7 +159,7 @@ module ecdsa_engine #(
     // -------------------------------------------------------
     // Modular Arithmetic Functions
     // -------------------------------------------------------
-    function [255:0] mod_add_p;
+    function automatic [255:0] mod_add_p;
         input [255:0] x, y;
         reg [256:0] sum;
         begin

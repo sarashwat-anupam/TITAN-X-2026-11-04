@@ -198,7 +198,7 @@ module l2_snoop_filter #(
                         end else begin
                             // Set Saturation: Evict victim via back-invalidation
                             chosen_way <= victim_way_comb;
-                            if (victim_way_comb >= DIR_WAYS - 1)
+                            if (victim_way_comb >= 5'd31)
                                 replace_ptr[index] <= 5'd0;
                             else
                                 replace_ptr[index] <= victim_way_comb + 5'd1;

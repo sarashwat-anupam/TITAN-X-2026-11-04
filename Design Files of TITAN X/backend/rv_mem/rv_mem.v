@@ -76,9 +76,6 @@ module rv_mem (
     reg [2:0]  funct3_q;
     reg [4:0]  amo_funct5_q;
     reg [63:0] rs2_data_q;
-
-    reg [31:0] amo_old_32, amo_new_32;
-    reg [63:0] amo_old_64, amo_new_64;
     wire [39:0] eff_mem_addr = (phys_addr != 40'h0 && phys_addr[0] !== 1'bx) ? phys_addr : alu_result[39:0];
 
     wire [1:0]  clean_bresp = dmem_bresp;
@@ -159,6 +156,11 @@ module rv_mem (
             default:   calc_amo_64 = old_v + op_v;
         endcase
     endfunction
+
+    wire [31:0] amo_old_32 = (dmem_rdata >> {store_addr_q[2:0], 3'b000}) & 32'hFFFF_FFFF;
+    wire [31:0] amo_new_32 = calc_amo_32(amo_funct5_q, amo_old_32, rs2_data_q[31:0]);
+    wire [63:0] amo_old_64 = dmem_rdata;
+    wire [63:0] amo_new_64 = calc_amo_64(amo_funct5_q, amo_old_64, rs2_data_q);
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -390,14 +392,10 @@ module rv_mem (
                             mstate       <= MS_AMO_WRITE;
 
                             if (funct3_q == `AMO_W) begin
-                                amo_old_32 = (dmem_rdata >> {store_addr_q[2:0], 3'b000}) & 32'hFFFF_FFFF;
-                                amo_new_32 = calc_amo_32(amo_funct5_q, amo_old_32, rs2_data_q[31:0]);
                                 result     <= {{32{amo_old_32[31]}}, amo_old_32};
                                 dmem_wdata <= {32'h0, amo_new_32} << {store_addr_q[2:0], 3'b000};
                                 dmem_wstrb <= 8'h0F << store_addr_q[2:0];
                             end else begin
-                                amo_old_64 = dmem_rdata;
-                                amo_new_64 = calc_amo_64(amo_funct5_q, amo_old_64, rs2_data_q);
                                 result     <= amo_old_64;
                                 dmem_wdata <= amo_new_64;
                                 dmem_wstrb <= 8'hFF;

@@ -652,8 +652,8 @@ module titan_x_top #(
 `ifndef SIM_AXI_RAM
     // Crossbar Slave 0 ID tracking
     reg [3:0] l2_s_rid, l2_s_bid;
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
+    always @(posedge clk or negedge core_rst_n) begin
+        if (!core_rst_n) begin
             l2_s_rid <= 4'h0;
             l2_s_bid <= 4'h0;
         end else begin

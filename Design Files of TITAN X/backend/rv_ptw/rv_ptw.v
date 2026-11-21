@@ -110,8 +110,8 @@ module rv_ptw (
                         acc_x       <= access_x;
                         priv_s_saved<= priv_s;
                         // Level-2 PT address: satp.PPN × PAGESIZE + VPN[2] × 8
-                        ptw_araddr  <= {satp_ppn[25:0], 12'h0} +
-                                        {{31{1'b0}}, vpn2, 3'b000};
+                        ptw_araddr  <= {2'b00, satp_ppn[25:0], 12'h0} +
+                                       {28'h0, vpn2, 3'b000};
                         ptw_arvalid <= 1'b1;
                         ptw_state   <= PTW_L2_REQ;
                     end
@@ -146,8 +146,8 @@ module rv_ptw (
                         end else begin
                             // Non-leaf: descend to L1
                             l2_ppn      <= pte_ppn;
-                            ptw_araddr  <= {pte_ppn[25:0], 12'h0} +
-                                            {{31{1'b0}}, vpn1, 3'b000};
+                            ptw_araddr  <= {2'b00, pte_ppn[25:0], 12'h0} +
+                                           {28'h0, vpn1, 3'b000};
                             ptw_arvalid <= 1'b1;
                             ptw_state   <= PTW_L1_REQ;
                         end
@@ -182,8 +182,8 @@ module rv_ptw (
                         end else begin
                             // Non-leaf: descend to L0
                             l1_ppn      <= pte_ppn;
-                            ptw_araddr  <= {pte_ppn[25:0], 12'h0} +
-                                            {{31{1'b0}}, vpn0, 3'b000};
+                            ptw_araddr  <= {2'b00, pte_ppn[25:0], 12'h0} +
+                                           {28'h0, vpn0, 3'b000};
                             ptw_arvalid <= 1'b1;
                             ptw_state   <= PTW_L0_REQ;
                         end

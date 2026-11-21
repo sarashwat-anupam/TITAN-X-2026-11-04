@@ -89,15 +89,11 @@ module sha256_engine (
         input integer wi;
         input [5:0]   rem;
         input [63:0]  total_bits;
-        reg   [3:0]   w_target;
-        reg   [1:0]   b_target;
         begin
-            w_target = rem[5:2];
-            b_target = rem[1:0];
-            if (wi < w_target) begin
+            if (wi < rem[5:2]) begin
                 calc_pad_single = msg_block[wi];
-            end else if (wi == w_target) begin
-                case (b_target)
+            end else if (wi == rem[5:2]) begin
+                case (rem[1:0])
                     2'd0: calc_pad_single = 32'h8000_0000;
                     2'd1: calc_pad_single = {msg_block[wi][31:24], 8'h80, 16'h0000};
                     2'd2: calc_pad_single = {msg_block[wi][31:16], 8'h80, 8'h00};
@@ -116,15 +112,11 @@ module sha256_engine (
     function [31:0] calc_pad_block1;
         input integer wi;
         input [5:0]   rem;
-        reg   [3:0]   w_target;
-        reg   [1:0]   b_target;
         begin
-            w_target = rem[5:2];
-            b_target = rem[1:0];
-            if (wi < w_target) begin
+            if (wi < rem[5:2]) begin
                 calc_pad_block1 = msg_block[wi];
-            end else if (wi == w_target) begin
-                case (b_target)
+            end else if (wi == rem[5:2]) begin
+                case (rem[1:0])
                     2'd0: calc_pad_block1 = 32'h8000_0000;
                     2'd1: calc_pad_block1 = {msg_block[wi][31:24], 8'h80, 16'h0000};
                     2'd2: calc_pad_block1 = {msg_block[wi][31:16], 8'h80, 8'h00};

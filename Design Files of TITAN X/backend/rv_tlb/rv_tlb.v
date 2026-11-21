@@ -59,7 +59,7 @@ module rv_tlb #(
     // valid(1) + global(1) + asid(16) + vpn(27) + ppn(44) + perm(8) + level(2)
     // Total: 1+1+16+27+44+8+2 = 99 bits per entry
     localparam VPN_W   = 27;  // Three 9-bit VPN levels
-    localparam PPN_W   = 44;  // Physical page number (38-bit PA / 4KB page = 26+18=44)
+    localparam PPN_W   = PA_W - 12;  // Physical page number (38-bit PA / 4KB page = 26 bits)
 
     reg              tlb_valid [0:SETS-1][0:WAYS-1];
     reg              tlb_global[0:SETS-1][0:WAYS-1];

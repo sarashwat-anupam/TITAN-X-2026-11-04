@@ -120,10 +120,8 @@ module rv_decode #(
                 reg_w_comb  = 1'b1;
             end
             `OP_JAL: begin
-                // Width check: 51 sign bits + 1 + 8 + 1 + 10 + 1 = 64.
-                // (Was 43 sign bits — a 63-bit concat silently
-                // zero-extended, corrupting every jal target.)
-                imm_comb    = {{51{eff_instr[31]}}, eff_instr[19:12],
+                // Width check: 44 sign bits + 8 + 1 + 10 + 1 = 64.
+                imm_comb    = {{44{eff_instr[31]}}, eff_instr[19:12],
                                eff_instr[20], eff_instr[30:21], 1'b0};
                 alu_op_comb = `ALU_ADD;
                 reg_w_comb  = 1'b1;
@@ -218,20 +216,7 @@ module rv_decode #(
                         12'h302: mret_comb = 1'b1;    // MRET
                         12'h102: sret_comb = 1'b1;    // SRET
                         12'h105: ;                    // WFI (handled as NOP)
-                        `OP_LOAD_FP: begin
-                imm_comb   = {{52{eff_instr[31]}}, eff_instr[31:20]};
-                mem_r_comb = 1'b1;
-                reg_w_comb = 1'b1;
-            end
-            `OP_STORE_FP: begin
-                imm_comb   = {{52{eff_instr[31]}}, eff_instr[31:25], eff_instr[11:7]};
-                mem_w_comb = 1'b1;
-            end
-            `OP_FP, `OP_FMADD, `OP_FMSUB, `OP_FNMSUB, `OP_FNMADD: begin
-                reg_w_comb  = 1'b1;
-                alu_op_comb = `ALU_ADD;
-            end
-            default: begin
+                        default: begin
                             if (eff_instr[31:25] == 7'b0001001) begin
                                 // SFENCE.VMA (handled as valid fence)
                             end else begin

@@ -104,12 +104,12 @@ module rv_dcache #(
     // FSM state registers (declared early — the eviction datapath below
     // indexes arrays by the SCHEDULED fill_* pointers)
     // -------------------------------------------------------
-    localparam D_IDLE      = 3'd0;
-    localparam D_EVICT_WR  = 3'd1;  // write dirty victim to memory
-    localparam D_EVICT_RSP = 3'd2;  // wait for write response
-    localparam D_REFILL_RQ = 3'd3;  // send AXI read request
-    localparam D_REFILL    = 3'd4;  // receive refill data
-    localparam D_FLUSH_SCAN= 3'd5;  // flush: walk sets/ways, evict dirty
+    localparam D_IDLE      = 4'd0;
+    localparam D_EVICT_WR  = 4'd1;  // write dirty victim to memory
+    localparam D_EVICT_RSP = 4'd2;  // wait for write response
+    localparam D_REFILL_RQ = 4'd3;  // send AXI read request
+    localparam D_REFILL    = 4'd4;  // receive refill data
+    localparam D_FLUSH_SCAN= 4'd5;  // flush: walk sets/ways, evict dirty
 
     reg [3:0]         state;        // 4 bits: headroom, all compares explicit
     reg [2:0]         fill_way;
@@ -245,22 +245,26 @@ module rv_dcache #(
     // Mark a way MRU in the 8-way PLRU tree (shared by hit path and
     // install path — installs previously never updated the tree, so the
     // victim pointer froze and one way was thrashed forever).
+    function [6:0] next_plru;
+        input [6:0] p;
+        input [2:0] wy;
+        case (wy)
+            3'd0: next_plru = {p[6:4], 1'b1, p[2], 1'b1, 1'b1};
+            3'd1: next_plru = {p[6:4], 1'b0, p[2], 1'b1, 1'b1};
+            3'd2: next_plru = {p[6:5], 1'b1, p[3], p[2], 1'b0, 1'b1};
+            3'd3: next_plru = {p[6:5], 1'b0, p[3], p[2], 1'b0, 1'b1};
+            3'd4: next_plru = {p[6],   1'b1, p[4:3], 1'b1, p[1], 1'b0};
+            3'd5: next_plru = {p[6],   1'b0, p[4:3], 1'b1, p[1], 1'b0};
+            3'd6: next_plru = {1'b1,   p[5], p[4:3], 1'b0, p[1], 1'b0};
+            3'd7: next_plru = {1'b0,   p[5], p[4:3], 1'b0, p[1], 1'b0};
+        endcase
+    endfunction
+
     task plru_mru;
         input [INDEX_W-1:0] ix;
         input [2:0]         wy;
-        reg [6:0]           p;
         begin
-            p = plru_state[ix];
-            case (wy)
-                3'd0: plru_state[ix] <= {p[6:4], 1'b0, 1'b0, 1'b0, 1'b1};
-                3'd1: plru_state[ix] <= {p[6:4], 1'b1, 1'b0, 1'b0, 1'b1};
-                3'd2: plru_state[ix] <= {p[6:5], 1'b0, p[3], 1'b1, 1'b1};
-                3'd3: plru_state[ix] <= {p[6:5], 1'b1, p[3], 1'b1, 1'b1};
-                3'd4: plru_state[ix] <= {p[6],   1'b0, p[4:3], p[2:1], 1'b1};
-                3'd5: plru_state[ix] <= {p[6],   1'b1, p[4:3], p[2:1], 1'b1};
-                3'd6: plru_state[ix] <= {1'b0,   p[5:3], p[2:1], 1'b1};
-                3'd7: plru_state[ix] <= {1'b1,   p[5:3], p[2:1], 1'b1};
-            endcase
+            plru_state[ix] <= next_plru(plru_state[ix], wy);
         end
     endtask
 
