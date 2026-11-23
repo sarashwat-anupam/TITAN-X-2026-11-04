@@ -26,6 +26,11 @@ SECTIONS
         *(.data .data.*)
     } > DDR4
 
+    .tohost : {
+        . = ALIGN(64);
+        *(.tohost)
+    } > DDR4
+
     .bss : {
         . = ALIGN(8);
         __bss_start = .;

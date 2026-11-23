@@ -37,6 +37,7 @@ struct CommandLineArgs {
     std::string bin_file = "";
     uint64_t bin_addr = 0x80000000ULL;
     std::string spike_log = "";
+    uint64_t cosim_end_pc = 0;
     bool verbose = false;
     bool fast_boot = false;
 };
@@ -58,6 +59,8 @@ void parse_args(int argc, char** argv, CommandLineArgs& args) {
             args.bin_addr = std::stoull(argv[++i], nullptr, 16);
         } else if (arg == "--spike-log" && i + 1 < argc) {
             args.spike_log = argv[++i];
+        } else if (arg == "--cosim-end-pc" && i + 1 < argc) {
+            args.cosim_end_pc = std::stoull(argv[++i], nullptr, 16);
         } else if (arg == "--verbose") {
             args.verbose = true;
         } else if (arg == "--fast-boot") {
@@ -87,6 +90,7 @@ int main(int argc, char** argv) {
     if (!args.hex_file.empty())   std::cout << " Hex Image:   " << args.hex_file << "\n";
     if (!args.bin_file.empty())   std::cout << " Binary Image:" << args.bin_file << " @ 0x" << std::hex << args.bin_addr << std::dec << "\n";
     if (!args.spike_log.empty())  std::cout << " Spike Log:   " << args.spike_log << "\n";
+    if (args.cosim_end_pc != 0)   std::cout << " Cosim End PC: 0x" << std::hex << args.cosim_end_pc << std::dec << "\n";
     std::cout << "===================================================================\n" << std::endl;
 
     auto top = std::make_unique<Vtitan_x_top>();
@@ -145,6 +149,9 @@ int main(int argc, char** argv) {
     }
 
     SpikeCosimBridge cosim;
+    if (args.cosim_end_pc != 0) {
+        cosim.set_end_sync_pc(args.cosim_end_pc);
+    }
     if (!args.spike_log.empty()) {
         cosim.load_spike_commit_log(args.spike_log);
     }
@@ -504,6 +511,7 @@ int main(int argc, char** argv) {
                               << " rd=x" << std::dec << (int)rd 
                               << " data=0x" << std::hex << data << std::dec << std::endl;
                 }
+                cosim.on_rtl_commit(main_cycles, 0, pc, rd, data, true);
                 // Check signature exit conditions (x3 / gp register)
                 if (rd == 3) {
                     if (data == 1) {

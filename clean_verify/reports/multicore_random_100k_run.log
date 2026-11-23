@@ -1,0 +1,102 @@
+===================================================================
+ SMVDU TITAN-X Clean-Room Pre-Synthesis Signoff Testbench Harness  
+ Max Cycles: 600000
+ Trace (FST): DISABLED
+ Hex Image:   clean_verify/tests/random/test_random_multicore.hex
+ Spike Log:   clean_verify/reports/spike_multicore_random.log
+ Cosim End PC: 0x800043c2
+===================================================================
+
+[MemoryModel] Loaded hex file: clean_verify/tests/random/test_random_multicore.hex up to addr 0x8000a010
+[SpikeCosim] Loaded golden commits from clean_verify/reports/spike_multicore_random.log:
+  Hart 0: 22516 commits
+  Hart 1: 22046 commits
+  Hart 2: 22602 commits
+  Hart 3: 22591 commits
+[DDR4 Init] 32MB DDR4 memory preloaded from ELF.
+[Testbench] Commencing SoC execution clocking...
+[Testbench] Auto-injected boot trampoline to DDR4 (0x0000000080000000) at Boot ROM Word 43..45
+[SIM INFO] 100000 cycles elapsed | Retired: H0=4650 H1=3971 H2=5192 H3=4866 H4=70
+[SIM INFO] 200000 cycles elapsed | Retired: H0=14319 H1=11824 H2=16090 H3=14895 H4=70
+[SIM INFO] 300000 cycles elapsed | Retired: H0=26045 H1=19676 H2=22604 H3=22593 H4=70
+PASS
+
+===================================================================
+ Simulation Finished at Cycle: 331028
+ Final PC: H0=0x0 H1=0x0 H2=0x800032fc H3=0x800043c0
+ Instructions Retired: Total=100298 [H0=32983, H1=22048, H2=22604, H3=22593, H4=70]
+ Status: ✅ PASSED
+ AXI4 Violations: 0
+ Cosim Mismatches: 0
+ Security Violations: 0
+ Video Violations: 0
+ Ethernet Violations: 0
+ USB Violations: 0
+ PCIe Violations: 0
+ Peripheral Violations: 0
+===================================================================
+
+
+===================================================================
+           TITAN-X SECURITY SUBSYSTEM BFM REPORT                  
+===================================================================
+ Hardware Root-of-Trust Boot: ✅ PASSED (auth cycles: 12034)
+ NIST SHA-256 Operations:     0
+ NIST AES-256 ECB/CBC Ops:    0
+ NIST ECDSA P-256 Operations: 0
+ TRNG Entropy Health Polls:   0
+ DRBG Random Number Streams:  0
+ Security Interrupts Fired:   TRNG=0, ECDSA=0, DRBG=0, AES=0, SHA=0
+ Security Violations:         0
+ Overall Status:              ✅ PASSED
+===================================================================
+
+===================================================================
+             TITAN-X VIDEO PIPELINE BFM REPORT                     
+===================================================================
+ VDMA APB Configuration Writes:  0
+ VDMA S2MM Frame Captures:       0
+ VDMA MM2S Frame Streamings:     0
+ VDMA Interrupts Fired (IRQ 17): 0
+ MIPI CSI-2 APB Writes:          0
+ MIPI Pixels Ingested:           0
+ ISP Pipeline Config Writes:     0
+ HDMI Controller APB Writes:     0
+ HDMI TMDS Clock Toggles:        1
+ HDMI TMDS Data Toggles:         0
+ Video Protocol Violations:      0
+ Overall Video Subsystem Status: ✅ PASSED
+===================================================================
+
+
+--- Ethernet GMII BFM Verification Report ---
+  TX Frames Captured:  0
+  TX Bytes Transferred: 0
+  RX Frames Injected:  0
+  RX Bytes Injected:   0
+  CRC-32 Check Errors: 0
+  Protocol Violations: 0
+  Overall Status:      PASSED
+---------------------------------------------
+
+--- USB 2.0 ULPI BFM Verification Report ---
+  TX Transfers Captured: 0
+  Bytes Transferred:     0
+  Protocol Violations:   0
+  Overall Status:        PASSED
+--------------------------------------------
+
+--- PCIe Gen2 x4 PIPE 3.0 BFM Verification Report ---
+  LTSSM Link Status:    LINK UP (L0)
+  Memory Write TLPs:    1
+  Memory Read TLPs:     1053
+  Completion TLPs:      525
+  Protocol Violations:  0
+  Overall Status:       PASSED
+-----------------------------------------------------
+
+--- Low-Speed Peripherals BFM Summary ---
+  SPI Transfers Completed: 0
+  I2C Transfers Completed: 0
+  Peripheral Violations:   0
+------------------------------------------

@@ -226,7 +226,7 @@ module rv_execute #(
 
     localparam MX_IDLE = 2'd0, MX_MUL = 2'd1, MX_DIV = 2'd2;
     reg [1:0]  mx_state;
-    reg [63:0] mx_a, mx_b;
+    reg [63:0] mx_a, mx_b, mx_pc_q;
     reg [6:0]  mx_opcode_q;
     reg [4:0]  mx_aluop_q, mx_rd_q;
     reg [2:0]  mx_f3_q;
@@ -272,7 +272,7 @@ module rv_execute #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             mx_state <= MX_IDLE;
-            mx_a <= 64'h0;  mx_b <= 64'h0;
+            mx_a <= 64'h0;  mx_b <= 64'h0; mx_pc_q <= 64'h0;
             mx_opcode_q <= 7'h0; mx_aluop_q <= 5'h0; mx_rd_q <= 5'h0;
             mx_f3_q <= 3'h0; mx_rw_q <= 1'b0; mx_v_q <= 1'b0;
             mx_fin <= 1'b0;
@@ -284,6 +284,7 @@ module rv_execute #(
             d_special  <= 1'b0;
             d_last     <= 1'b0;
             mx_fin     <= 1'b0;
+            mx_pc_q    <= 64'h0;
         end else begin
             // One-shot: raise on the delivery edge, drop on the drain
             // advance. Mutually exclusive conditions (mx_done implies
@@ -297,6 +298,7 @@ module rv_execute #(
                   // 64-bit registers: word divide/rem are NOT modular,
                   // unlike MULW whose low word survives full-width math.
                   mx_a <= eff_a;  mx_b <= eff_b;
+                  mx_pc_q <= pc_in;
                   mx_opcode_q <= opcode;  mx_aluop_q <= alu_op;
                   mx_rd_q <= rd_in;  mx_f3_q <= funct3;
                   mx_rw_q <= reg_write;  mx_v_q <= valid_in;
@@ -731,6 +733,8 @@ module rv_execute #(
             pc_out <= 64'h0;
         end else if (!stall && !mul_div_stall && !fp_stall && !mx_fin) begin
             pc_out <= pc_in;
+        end else if (mx_done) begin
+            pc_out <= mx_pc_q;
         end
     end
 
@@ -856,6 +860,16 @@ module rv_execute #(
             trap_pc_out   <= 64'h0;
             trap_cause_out<= 64'h0;
             trap_tval_out <= 64'h0;
+        end else if (stall) begin
+            // Pipeline stall: hold current stage outputs for downstream stage (rv_mem)
+        end else begin
+            valid_out      <= 1'b0;
+            reg_write_out  <= 1'b0;
+            mem_read_out   <= 1'b0;
+            mem_write_out  <= 1'b0;
+            is_amo_out     <= 1'b0;
+            branch_taken   <= 1'b0;
+            trap_taken     <= 1'b0;
         end
     end
 

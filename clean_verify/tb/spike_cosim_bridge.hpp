@@ -22,7 +22,14 @@ public:
         bool     has_wb;
     };
 
-    SpikeCosimBridge() : mismatches_(0), total_commits_(0) {}
+    SpikeCosimBridge() : mismatches_(0), total_commits_(0), end_sync_pc_(0) {
+        for (int i = 0; i < 8; ++i) {
+            user_active_[i] = false;
+            end_sync_reached_[i] = false;
+        }
+    }
+
+    void set_end_sync_pc(uint64_t pc) { end_sync_pc_ = pc; }
 
     bool load_spike_commit_log(const std::string& logfile) {
         std::ifstream file(logfile);
@@ -52,9 +59,14 @@ public:
                 std::istringstream iss(line);
                 std::string token;
                 iss >> token; // "core"
-                uint32_t core_id = 0;
-                iss >> core_id; // e.g. 0:
-                ev.hartid = core_id;
+                std::string core_token;
+                iss >> core_token; // e.g. "0:"
+                if (!core_token.empty() && core_token.back() == ':') core_token.pop_back();
+                try {
+                    ev.hartid = std::stoul(core_token);
+                } catch (...) {
+                    continue;
+                }
 
                 std::string pc_token;
                 iss >> pc_token;
@@ -64,7 +76,11 @@ public:
                 }
 
                 if (pc_token.find("0x") == 0) {
-                    ev.pc = std::stoull(pc_token, nullptr, 16);
+                    try {
+                        ev.pc = std::stoull(pc_token, nullptr, 16);
+                    } catch (...) {
+                        continue;
+                    }
                 }
 
                 std::string instr_token;
@@ -72,37 +88,58 @@ public:
                 if (instr_token.find("(0x") == 0) {
                     std::string hex_str = instr_token.substr(3);
                     if (!hex_str.empty() && hex_str.back() == ')') hex_str.pop_back();
-                    ev.instr = std::stoul(hex_str, nullptr, 16);
+                    try {
+                        ev.instr = std::stoul(hex_str, nullptr, 16);
+                    } catch (...) {}
                 }
 
                 std::string reg_token;
                 if (iss >> reg_token) {
                     // e.g. "x5" or "ra"
                     if (reg_token.length() >= 2 && reg_token[0] == 'x' && isdigit(reg_token[1])) {
-                        ev.rd = std::stoul(reg_token.substr(1));
-                        std::string data_token;
-                        if (iss >> data_token) {
-                            if (data_token.find("0x") == 0) {
-                                ev.data = std::stoull(data_token, nullptr, 16);
-                                ev.has_wb = true;
+                        try {
+                            ev.rd = std::stoul(reg_token.substr(1));
+                            std::string data_token;
+                            if (iss >> data_token) {
+                                if (data_token.find("0x") == 0) {
+                                    ev.data = std::stoull(data_token, nullptr, 16);
+                                    ev.has_wb = true;
+                                }
                             }
-                        }
+                        } catch (...) {}
                     }
                 }
 
                 // Only track user code commits with register writeback (skip internal spike reset loader and non-WB instructions)
-                if (ev.has_wb && ev.pc >= 0x10000000ULL) {
+                if (ev.has_wb && ev.pc >= 0x80000000ULL && (end_sync_pc_ == 0 || ev.pc < end_sync_pc_)) {
                     golden_queue_[ev.hartid].push_back(ev);
                 }
             }
         }
-        std::cout << "[SpikeCosim] Loaded " << golden_queue_[0].size() 
-                  << " golden commits from " << logfile << std::endl;
+        std::cout << "[SpikeCosim] Loaded golden commits from " << logfile << ":\n";
+        for (int h = 0; h < 4; ++h) {
+            std::cout << "  Hart " << h << ": " << golden_queue_[h].size() << " commits\n";
+        }
         return true;
     }
 
     void on_rtl_commit(uint64_t cycle, uint32_t hartid, uint64_t pc, uint8_t rd, uint64_t data, bool we) {
         total_commits_++;
+        if (hartid < 8) {
+            if (!user_active_[hartid]) {
+                if (pc >= 0x80000000ULL) {
+                    user_active_[hartid] = true;
+                } else {
+                    return;
+                }
+            }
+            if (end_sync_pc_ != 0 && pc >= end_sync_pc_) {
+                end_sync_reached_[hartid] = true;
+            }
+            if (end_sync_reached_[hartid]) {
+                return;
+            }
+        }
         
         // Track GPR state in reference shadow table
         if (we && rd != 0 && rd < 32) {
@@ -153,6 +190,9 @@ public:
 private:
     uint64_t mismatches_;
     uint64_t total_commits_;
+    uint64_t end_sync_pc_;
+    bool     user_active_[8];
+    bool     end_sync_reached_[8];
     std::unordered_map<uint32_t, std::deque<CommitEvent>> golden_queue_;
     std::unordered_map<uint32_t, std::unordered_map<uint8_t, uint64_t>> shadow_gpr_;
 };
