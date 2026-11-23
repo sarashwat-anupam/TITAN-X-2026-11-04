@@ -15,7 +15,7 @@
 `timescale 1ns/1ps
 module ddr_phy_if #(
     parameter ROW_BITS  = 9,    // modeled rows  (controller uses up to 16)
-    parameter COL_BITS  = 8     // modeled cols  (controller uses 10)
+    parameter COL_BITS  = 10   // modeled cols  (controller uses 10)
 ) (
     input  wire        clk,        // System clock (2x DDR rate)
     input  wire        rst_n,

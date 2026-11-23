@@ -107,7 +107,8 @@ module ecdsa_engine #(
     // -------------------------------------------------------
     // APB Registers & Address Decoding
     // -------------------------------------------------------
-    wire [3:0] reg_bank = (paddr[19:16] != 4'h0) ? paddr[19:16] : paddr[11:8];
+    wire [3:0] reg_bank = (paddr[11:8] != 4'h0) ? paddr[11:8] :
+                          (paddr[19:16] >= 4'h1 && paddr[19:16] <= 4'h4) ? paddr[19:16] : 4'h0;
     wire [4:0] reg_word = paddr[6:2];
 
     reg [31:0] ctrl_reg; // bit 0 = start, bit 1 = mode (0=P256), bit 2 = op (0=verify)

@@ -319,7 +319,7 @@ module l2_snoop_filter #(
                             dir_state[index][hit_way] <= ST_M;
                             dir_mask[index][hit_way] <= (1 << req_core_saved);
                         end else if (req_type_saved == 2'b00) begin // ReadShared
-                            if (line_state == ST_M || line_state == ST_E) begin
+                            if ((line_state == ST_M || line_state == ST_E) && (hit_mask != (1 << req_core_saved))) begin
                                 dir_state[index][hit_way] <= ST_S;
                                 dir_mask[index][hit_way] <= hit_mask | (1 << req_core_saved);
                             end else if (line_state == ST_S) begin

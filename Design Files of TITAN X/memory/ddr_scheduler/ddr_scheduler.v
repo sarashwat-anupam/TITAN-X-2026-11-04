@@ -19,7 +19,7 @@ module ddr_scheduler #(
     input  wire [2:0]  cmd_bank,
     input  wire [15:0] cmd_row,
     input  wire [9:0]  cmd_col,
-    output reg         cmd_ready,
+    output wire        cmd_ready,
     output reg         cmd_done,    // pulsed when a WR (or REF) fully retires
     output reg  [63:0] rd_data,
     output reg         rd_valid,
@@ -75,13 +75,14 @@ module ddr_scheduler #(
     reg [9:0]  saved_col;
     reg        rd_arm;      // BUG-DDR-003: armed once valid observed LOW
 
+    assign cmd_ready = (sched_state == SC_IDLE);
+
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             for (i = 0; i < BA_SLOTS; i = i+1) begin
                 open_row[i] <= 16'h0;
                 row_open[i] <= 1'b0;
             end
-            cmd_ready      <= 1'b1;
             cmd_done       <= 1'b0;
             rd_arm         <= 1'b0;
             dfi_cs_n       <= 1'b1;
@@ -111,9 +112,7 @@ module ddr_scheduler #(
 
             case (sched_state)
                 SC_IDLE: begin
-                    cmd_ready <= 1'b1;
                     if (cmd_valid) begin
-                        cmd_ready      <= 1'b0;
                         rd_arm         <= 1'b0;
                         saved_cmd_type <= cmd_type;
                         saved_bg       <= cmd_bg;
@@ -147,12 +146,12 @@ module ddr_scheduler #(
 
                 SC_TRPW: begin
                     if (tRP_cnt == 4'h0) begin
-                        sched_state <= SC_ACT;
-                        // TRPW doubles as the refresh (tRFC) wait; only a
-                        // REF command retires here, never the PRE of a
-                        // row-conflict sequence.
-                        if (saved_cmd_type == CMD_REF)
-                            cmd_done <= 1'b1;
+                        if (saved_cmd_type == CMD_REF) begin
+                            cmd_done    <= 1'b1;
+                            sched_state <= SC_IDLE;
+                        end else begin
+                            sched_state <= SC_ACT;
+                        end
                     end else tRP_cnt <= tRP_cnt - 4'h1;
                 end
 

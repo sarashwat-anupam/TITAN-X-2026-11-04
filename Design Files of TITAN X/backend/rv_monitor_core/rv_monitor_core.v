@@ -80,30 +80,132 @@ module rv_monitor_core #(
     wire [31:0] fe_instr;
     wire        fe_valid;
 
-    // Instruction memory adapter
-    assign imem_araddr  = fe_pc[39:0];
-    assign imem_arvalid = !stall && !flush_fe;
-    
-    // Simplification for monitor core: single-cycle SRAM response assumed or 
-    // basic wait state. Real design needs full handshaking and alignment.
-    assign fe_instr = imem_rdata[31:0]; 
-    assign fe_valid = imem_rvalid;
+    // -------------------------------------------------------
+    // Instruction Fetch FSM with Skid Buffer
+    // -------------------------------------------------------
+    localparam F_IDLE  = 2'd0;
+    localparam F_WAIT  = 2'd1;
+    localparam F_DRAIN = 2'd2;
 
-
-    
+    reg [1:0]  fstate;
     reg [63:0] pc_reg;
+    reg [63:0] fetch_pc;
+    reg        imem_arvalid_r;
+    reg [31:0] fe_buf;
+    reg [63:0] fe_buf_pc;
+    reg        fe_buf_valid;
+
+    assign imem_araddr  = {fetch_pc[39:3], 3'b000};
+    assign imem_arvalid = imem_arvalid_r;
+
+    wire [31:0] curr_rdata_word = fetch_pc[2] ? imem_rdata[63:32] : imem_rdata[31:0];
+
+    // Output to Decode: either from skid buffer (if stalled) or direct from AXI R bus
+    assign fe_pc    = fe_buf_valid ? fe_buf_pc : fetch_pc;
+    assign fe_instr = fe_buf_valid ? fe_buf : curr_rdata_word;
+    assign fe_valid = (fe_buf_valid ? 1'b1 : (imem_rvalid && (fstate == F_WAIT) && !stall)) && !branch_taken;
+
     always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) pc_reg <= RESET_PC;
-        else if (branch_taken) pc_reg <= branch_target;
-        else if (fe_valid && !stall) pc_reg <= pc_reg + 4;
+        if (!rst_n) begin
+            fstate         <= F_IDLE;
+            pc_reg         <= RESET_PC;
+            fetch_pc       <= RESET_PC;
+            imem_arvalid_r <= 1'b0;
+            fe_buf         <= 32'h00000013; // NOP
+            fe_buf_pc      <= RESET_PC;
+            fe_buf_valid   <= 1'b0;
+        end else begin
+            if (branch_taken) begin
+                fe_buf_valid <= 1'b0;
+                pc_reg       <= branch_target;
+                case (fstate)
+                    F_IDLE: begin
+                        fetch_pc       <= branch_target;
+                        imem_arvalid_r <= 1'b1;
+                        fstate         <= F_WAIT;
+                    end
+                    F_WAIT: begin
+                        if (fe_buf_valid || imem_rvalid) begin
+                            // In-flight read already completed or completed this cycle.
+                            // Immediately fetch the new branch target!
+                            fetch_pc       <= branch_target;
+                            imem_arvalid_r <= 1'b1;
+                            fstate         <= F_WAIT;
+                        end else begin
+                            // Read is still in flight (or address handshake pending).
+                            // Must wait for it to complete and discard before fetching target.
+                            if (imem_arvalid_r && imem_arready) begin
+                                imem_arvalid_r <= 1'b0;
+                            end
+                            fstate <= F_DRAIN;
+                        end
+                    end
+                    F_DRAIN: begin
+                        if (imem_arvalid_r && imem_arready) begin
+                            imem_arvalid_r <= 1'b0;
+                        end
+                        if (imem_rvalid) begin
+                            fetch_pc       <= branch_target;
+                            imem_arvalid_r <= 1'b1;
+                            fstate         <= F_WAIT;
+                        end
+                    end
+                endcase
+            end else begin
+                case (fstate)
+                    F_IDLE: begin
+                        if (!stall) begin
+                            fetch_pc       <= pc_reg;
+                            imem_arvalid_r <= 1'b1;
+                            fe_buf_valid   <= 1'b0;
+                            fstate         <= F_WAIT;
+                        end
+                    end
+
+                    F_WAIT: begin
+                        if (imem_arvalid_r && imem_arready) begin
+                            imem_arvalid_r <= 1'b0;
+                        end
+
+                        if (fe_buf_valid) begin
+                            if (!stall) begin
+                                fe_buf_valid <= 1'b0;
+                                pc_reg       <= fe_buf_pc + 4;
+                                fstate       <= F_IDLE;
+                            end
+                        end else if (imem_rvalid) begin
+                            if (!stall) begin
+                                pc_reg <= fetch_pc + 4;
+                                fstate <= F_IDLE;
+                            end else begin
+                                fe_buf       <= curr_rdata_word;
+                                fe_buf_pc    <= fetch_pc;
+                                fe_buf_valid <= 1'b1;
+                            end
+                        end
+                    end
+
+                    F_DRAIN: begin
+                        if (imem_arvalid_r && imem_arready) begin
+                            imem_arvalid_r <= 1'b0;
+                        end
+                        if (imem_rvalid) begin
+                            fetch_pc       <= pc_reg;
+                            imem_arvalid_r <= 1'b1;
+                            fstate         <= F_WAIT;
+                        end
+                    end
+                endcase
+            end
+        end
     end
-    assign fe_pc = pc_reg;
+
     assign flush_fe = branch_taken;
-    // BUG-MONCORE-001: Pipeline stalls must freeze registers, not flush them.
-    // Flushing on stall caused in-flight memory transactions to be aborted prematurely.
     assign flush_de = branch_taken;
 
-    // Decode → Execute
+    // -------------------------------------------------------
+    // Decode Stage
+    // -------------------------------------------------------
     wire [63:0] de_pc, de_rs1, de_rs2, de_imm;
     wire [4:0]  de_rd, de_rs1a, de_rs2a;
     wire [2:0]  de_f3;
@@ -114,10 +216,10 @@ module rv_monitor_core #(
     wire        de_is_csr;
     wire [1:0]  de_csr_op;
     wire        de_is_ecall, de_is_ebreak, de_is_mret;
-    
-    wire        mon_wb_we   = ex_valid && ex_regw && (ex_rd != 5'h0);
-    wire [4:0]  mon_wb_rd   = ex_rd;
-    wire [63:0] mon_wb_data = ex_memr ? dmem_rdata : ex_alures;
+
+    wire        mon_wb_we;
+    wire [4:0]  mon_wb_rd;
+    wire [63:0] mon_wb_data;
 
     rv_decode u_decode (
         .clk       (clk),         .rst_n    (rst_n),
@@ -137,7 +239,9 @@ module rv_monitor_core #(
     assign de_amo_f5 = 5'h0;
     assign de_is_amo = 1'b0;
 
-    // Execute
+    // -------------------------------------------------------
+    // Execute Stage
+    // -------------------------------------------------------
     wire [63:0] ex_alures, ex_rs2, ex_lr_addr;
     wire [4:0]  ex_rd, ex_amo_f5;
     wire [2:0]  ex_f3;
@@ -145,12 +249,17 @@ module rv_monitor_core #(
     wire        ex_memr, ex_memw, ex_regw, ex_is_amo, ex_valid, ex_lr_valid;
     wire        mul_div_stall;
 
-    wire mem_stall = (dmem_awvalid && (!dmem_awready || !dmem_wready)) ||
-                     (dmem_arvalid && !dmem_arready);
+    localparam M_IDLE  = 3'd0;
+    localparam M_RWAIT = 3'd1;
+    localparam M_WRESP = 3'd2;
+    localparam M_DONE  = 3'd3;
+    reg [2:0]  mstate;
+
+    wire stall_mem = (mstate == M_RWAIT) || (mstate == M_WRESP) || ((mstate == M_IDLE) && ex_valid && (ex_memr || ex_memw));
     /* verilator lint_off UNOPTFLAT */
-    wire stall_ex = mem_stall || halt_req;
+    wire stall_ex = stall_mem || halt_req;
     /* verilator lint_on UNOPTFLAT */
-    assign stall = mul_div_stall || stall_ex;
+    assign stall  = mul_div_stall || stall_ex;
 
     rv_execute #(
         .HART_ID(HART_ID)
@@ -181,28 +290,157 @@ module rv_monitor_core #(
         .lr_addr      (ex_lr_addr), .lr_valid     (ex_lr_valid)
     );
 
-    // Memory Access (No D-Cache, Direct AXI)
-    // AXI mappings for simple bare metal execution without caching
-    assign dmem_awvalid = ex_valid && ex_memw;
-    assign dmem_awaddr  = ex_alures[39:0];
+    // -------------------------------------------------------
+    // Data Memory Controller (AXI4 Load / Store)
+    // -------------------------------------------------------
+    reg        dmem_arvalid_r;
+    reg        dmem_awvalid_r;
+    reg        dmem_wvalid_r;
+    reg [63:0] dmem_rdata_latched;
+    reg [63:0] mem_addr_latched;
+    reg [63:0] mem_wdata_latched;
+    reg [2:0]  mem_f3_latched;
+    reg        mem_regw_latched;
+    reg [4:0]  mem_rd_latched;
+    reg        mem_is_load;
+
+    // Load formatting logic
+    wire [2:0]  b_offset = mem_addr_latched[2:0];
+    wire [7:0]  lb_data  = (dmem_rdata_latched >> (b_offset * 8)) & 8'hFF;
+    wire [15:0] lh_data  = (dmem_rdata_latched >> (b_offset[2:1] * 16)) & 16'hFFFF;
+    wire [31:0] lw_data  = (dmem_rdata_latched >> (b_offset[2] * 32)) & 32'hFFFF_FFFF;
+
+    reg [63:0] formatted_load_data;
+    always @(*) begin
+        case (mem_f3_latched)
+            3'b000: formatted_load_data = {{56{lb_data[7]}}, lb_data};        // LB
+            3'b001: formatted_load_data = {{48{lh_data[15]}}, lh_data};      // LH
+            3'b010: formatted_load_data = {{32{lw_data[31]}}, lw_data};      // LW
+            3'b011: formatted_load_data = dmem_rdata_latched;                 // LD
+            3'b100: formatted_load_data = {56'h0, lb_data};                   // LBU
+            3'b101: formatted_load_data = {48'h0, lh_data};                   // LHU
+            3'b110: formatted_load_data = {32'h0, lw_data};                   // LWU
+            default: formatted_load_data = dmem_rdata_latched;
+        endcase
+    end
+
+    // Store formatting logic
+    wire [2:0]  st_offset = mem_addr_latched[2:0];
+    reg [7:0]   st_strb;
+    reg [63:0]  st_data;
+    always @(*) begin
+        case (mem_f3_latched)
+            3'b000: begin // SB
+                st_strb = 8'h01 << st_offset;
+                st_data = {8{mem_wdata_latched[7:0]}};
+            end
+            3'b001: begin // SH
+                st_strb = 8'h03 << (st_offset[2:1] * 2);
+                st_data = {4{mem_wdata_latched[15:0]}};
+            end
+            3'b010: begin // SW
+                st_strb = 8'h0F << (st_offset[2] * 4);
+                st_data = {2{mem_wdata_latched[31:0]}};
+            end
+            3'b011: begin // SD
+                st_strb = 8'hFF;
+                st_data = mem_wdata_latched;
+            end
+            default: begin
+                st_strb = 8'hFF;
+                st_data = mem_wdata_latched;
+            end
+        endcase
+    end
+
+    assign dmem_arvalid = dmem_arvalid_r;
+    assign dmem_araddr  = {mem_addr_latched[39:3], 3'b000};
+    assign dmem_arlen   = 8'h0;
+    assign dmem_arsize  = 3'h3;
+    assign dmem_arburst = 2'b01;
+    assign dmem_rready  = 1'b1;
+
+    assign dmem_awvalid = dmem_awvalid_r;
+    assign dmem_awaddr  = {mem_addr_latched[39:3], 3'b000};
     assign dmem_awlen   = 8'h0;
-    assign dmem_awsize  = ex_f3;
+    assign dmem_awsize  = 3'h3;
     assign dmem_awburst = 2'b01;
-    
-    assign dmem_wvalid  = ex_valid && ex_memw;
-    assign dmem_wdata   = ex_rs2;
-    assign dmem_wstrb   = 8'hFF;
+
+    assign dmem_wvalid  = dmem_wvalid_r;
+    assign dmem_wdata   = st_data;
+    assign dmem_wstrb   = st_strb;
     assign dmem_wlast   = 1'b1;
-    
     assign dmem_bready  = 1'b1;
 
-    assign dmem_arvalid = ex_valid && ex_memr;
-    assign dmem_araddr  = ex_alures[39:0];
-    assign dmem_arlen   = 8'h0;
-    assign dmem_arsize  = ex_f3;
-    assign dmem_arburst = 2'b01;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            mstate             <= M_IDLE;
+            dmem_arvalid_r     <= 1'b0;
+            dmem_awvalid_r     <= 1'b0;
+            dmem_wvalid_r      <= 1'b0;
+            dmem_rdata_latched <= 64'h0;
+            mem_addr_latched   <= 64'h0;
+            mem_wdata_latched  <= 64'h0;
+            mem_f3_latched     <= 3'h0;
+            mem_regw_latched   <= 1'b0;
+            mem_rd_latched     <= 5'h0;
+            mem_is_load        <= 1'b0;
+        end else begin
+            case (mstate)
+                M_IDLE: begin
+                    if (ex_valid && ex_memr) begin
+                        mem_addr_latched <= ex_alures;
+                        mem_f3_latched   <= ex_f3;
+                        mem_regw_latched <= ex_regw;
+                        mem_rd_latched   <= ex_rd;
+                        mem_is_load      <= 1'b1;
+                        dmem_arvalid_r   <= 1'b1;
+                        mstate           <= M_RWAIT;
+                    end else if (ex_valid && ex_memw) begin
+                        mem_addr_latched  <= ex_alures;
+                        mem_wdata_latched <= ex_rs2;
+                        mem_f3_latched    <= ex_f3;
+                        mem_regw_latched  <= 1'b0;
+                        mem_rd_latched    <= 5'h0;
+                        mem_is_load       <= 1'b0;
+                        dmem_awvalid_r    <= 1'b1;
+                        dmem_wvalid_r     <= 1'b1;
+                        mstate            <= M_WRESP;
+                    end else begin
+                        mem_is_load      <= 1'b0;
+                    end
+                end
 
-    assign dmem_rready  = 1'b1;
+                M_RWAIT: begin
+                    if (dmem_arvalid_r && dmem_arready) begin
+                        dmem_arvalid_r <= 1'b0;
+                    end
+                    if (dmem_rvalid) begin
+                        dmem_rdata_latched <= dmem_rdata;
+                        mstate             <= M_DONE;
+                    end
+                end
+
+                M_WRESP: begin
+                    if (dmem_awvalid_r && dmem_awready) dmem_awvalid_r <= 1'b0;
+                    if (dmem_wvalid_r && dmem_wready)   dmem_wvalid_r  <= 1'b0;
+                    if (dmem_bvalid) begin
+                        mstate <= M_DONE;
+                    end
+                end
+
+                M_DONE: begin
+                    mstate <= M_IDLE;
+                end
+            endcase
+        end
+    end
+
+    // Writeback mux: load results arrive in M_DONE
+    assign mon_wb_we   = (mstate == M_DONE && mem_is_load) ? (mem_regw_latched && (mem_rd_latched != 5'h0)) :
+                         (ex_valid && ex_regw && !ex_memr && (ex_rd != 5'h0));
+    assign mon_wb_rd   = (mstate == M_DONE && mem_is_load) ? mem_rd_latched : ex_rd;
+    assign mon_wb_data = (mstate == M_DONE && mem_is_load) ? formatted_load_data : ex_alures;
 
     assign hart_halted = halt_req;
     assign hart_running = !halt_req;

@@ -80,51 +80,72 @@ module rv_tlb #(
     wire [VPN_W-1:0]    fill_vpn     = fill_va[VA_W-1:12];
 
     // -------------------------------------------------------
-    // Lookup: combinational
+    // Lookup: combinational across sets and ways for superpages
     // -------------------------------------------------------
-    // Per-way hit signals
-    wire [WAYS-1:0] way_hit;
-    wire [PPN_W-1:0] way_ppn  [0:WAYS-1];
-    wire [7:0]        way_perm [0:WAYS-1];
+    wire [SETS-1:0] way_hit [0:WAYS-1];
+    wire [PPN_W-1:0] way_ppn [0:SETS-1][0:WAYS-1];
+    wire [7:0]       way_perm [0:SETS-1][0:WAYS-1];
+    wire [1:0]       way_lvl  [0:SETS-1][0:WAYS-1];
 
-    genvar w;
+    genvar s, w;
     generate
-        for (w = 0; w < WAYS; w = w + 1) begin : tlb_lookup
-            // Match conditions:
-            // - valid
-            // - VPN matches (considering superpage granularity)
-            // - ASID matches OR global bit set
-            wire vpn_match;
-            assign vpn_match = (tlb_level[set_idx][w] == 2'd2) ?
-                                  // 1GB: only top 9 VPN bits must match
-                                  (tlb_vpn[set_idx][w][26:18] == va_vpn[26:18]) :
-                               (tlb_level[set_idx][w] == 2'd1) ?
-                                  // 2MB: top 18 VPN bits must match
-                                  (tlb_vpn[set_idx][w][26:9]  == va_vpn[26:9]) :
-                                  // 4KB: all 27 VPN bits must match
-                                  (tlb_vpn[set_idx][w]        == va_vpn);
-            assign way_hit[w] = tlb_valid[set_idx][w] && vpn_match &&
-                                  (tlb_global[set_idx][w] ||
-                                   (tlb_asid[set_idx][w] == asid_in));
-            assign way_ppn[w]  = tlb_ppn[set_idx][w];
-            assign way_perm[w] = tlb_perm[set_idx][w];
+        for (s = 0; s < SETS; s = s + 1) begin : gen_tlb_s
+            for (w = 0; w < WAYS; w = w + 1) begin : gen_tlb_w
+                wire vpn_match = (tlb_level[s][w] == 2'd2) ? (tlb_vpn[s][w][26:18] == va_vpn[26:18]) :
+                                 (tlb_level[s][w] == 2'd1) ? (tlb_vpn[s][w][26:9]  == va_vpn[26:9]) :
+                                 ((s == set_idx) && (tlb_vpn[s][w] == va_vpn));
+                assign way_hit[w][s] = tlb_valid[s][w] && vpn_match &&
+                                       (tlb_global[s][w] || (tlb_asid[s][w] == asid_in));
+                assign way_ppn[s][w]  = tlb_ppn[s][w];
+                assign way_perm[s][w] = tlb_perm[s][w];
+                assign way_lvl[s][w]  = tlb_level[s][w];
+            end
         end
     endgenerate
 
-    assign hit = |way_hit;
+    reg                hit_r;
+    reg [PPN_W-1:0]    hit_ppn_r;
+    reg [7:0]          hit_perm_r;
+    reg [1:0]          hit_level_r;
+    reg [1:0]          hit_way_r;
+    reg [SET_BITS-1:0] hit_set_r;
 
-    // Mux: select the hitting way
-    wire [PPN_W-1:0] hit_ppn  = ({PPN_W{way_hit[0]}} & way_ppn[0]) |
-                                  ({PPN_W{way_hit[1]}} & way_ppn[1]) |
-                                  ({PPN_W{way_hit[2]}} & way_ppn[2]) |
-                                  ({PPN_W{way_hit[3]}} & way_ppn[3]);
-    wire [7:0] hit_perm = ({8{way_hit[0]}} & way_perm[0]) |
-                           ({8{way_hit[1]}} & way_perm[1]) |
-                           ({8{way_hit[2]}} & way_perm[2]) |
-                           ({8{way_hit[3]}} & way_perm[3]);
+    integer lk_s, lk_w;
+    always @(*) begin
+        hit_r       = 1'b0;
+        hit_ppn_r   = {PPN_W{1'b0}};
+        hit_perm_r  = 8'h0;
+        hit_level_r = 2'd0;
+        hit_way_r   = 2'd0;
+        hit_set_r   = {SET_BITS{1'b0}};
+        for (lk_s = 0; lk_s < SETS; lk_s = lk_s + 1) begin
+            for (lk_w = 0; lk_w < WAYS; lk_w = lk_w + 1) begin
+                if (way_hit[lk_w][lk_s]) begin
+                    hit_r       = 1'b1;
+                    hit_ppn_r   = way_ppn[lk_s][lk_w];
+                    hit_perm_r  = way_perm[lk_s][lk_w];
+                    hit_level_r = way_lvl[lk_s][lk_w];
+                    hit_way_r   = lk_w[1:0];
+                    hit_set_r   = lk_s[SET_BITS-1:0];
+                end
+            end
+        end
+    end
 
-    // Physical address = PPN concatenated with page offset
-    assign pa_out   = {hit_ppn[PA_W-13:0], va_in[11:0]};
+    assign hit = hit_r;
+    wire [PPN_W-1:0]    hit_ppn     = hit_ppn_r;
+    wire [7:0]          hit_perm    = hit_perm_r;
+    wire [1:0]          hit_level   = hit_level_r;
+    wire [1:0]          hit_way_enc = hit_way_r;
+    wire [SET_BITS-1:0] hit_set_idx = hit_set_r;
+
+    // Physical address = PPN concatenated with page offset according to page level:
+    // Level 2 (1GB): PPN[25:18] (8 bits) + VA[29:0] (30 bits) = 38-bit PA
+    // Level 1 (2MB): PPN[25:9] (17 bits) + VA[20:0] (21 bits) = 38-bit PA
+    // Level 0 (4KB): PPN[25:0] (26 bits) + VA[11:0] (12 bits) = 38-bit PA
+    assign pa_out   = (hit_level == 2'd2) ? {hit_ppn[PA_W-13:18], va_in[29:0]} :
+                      (hit_level == 2'd1) ? {hit_ppn[PA_W-13:9],  va_in[20:0]} :
+                                            {hit_ppn[PA_W-13:0],  va_in[11:0]};
     assign perm_r   = hit_perm[1];  // R bit
     assign perm_w   = hit_perm[2];  // W bit
     assign perm_x   = hit_perm[3];  // X bit
@@ -155,10 +176,7 @@ module rv_tlb #(
                           // Right half (ways 2,3): pick non-MRU
                           (!tlb_plru[fill_set_idx][0] ? 2'd2 : 2'd3);
 
-    // PLRU update function: update on hit
-    wire [1:0] hit_way_enc = way_hit[1] ? 2'd1 :
-                              way_hit[2] ? 2'd2 :
-                              way_hit[3] ? 2'd3 : 2'd0;
+
 
     // -------------------------------------------------------
     // Fill and Invalidation Logic
@@ -216,10 +234,10 @@ module rv_tlb #(
             end else if (hit && req_valid) begin
                 // Update PLRU on hit
                 case (hit_way_enc)
-                    2'd0: tlb_plru[set_idx] <= {1'b0, 1'b0, tlb_plru[set_idx][0]};
-                    2'd1: tlb_plru[set_idx] <= {1'b0, 1'b1, tlb_plru[set_idx][0]};
-                    2'd2: tlb_plru[set_idx] <= {1'b1, tlb_plru[set_idx][1], 1'b0};
-                    2'd3: tlb_plru[set_idx] <= {1'b1, tlb_plru[set_idx][1], 1'b1};
+                    2'd0: tlb_plru[hit_set_idx] <= {1'b0, 1'b0, tlb_plru[hit_set_idx][0]};
+                    2'd1: tlb_plru[hit_set_idx] <= {1'b0, 1'b1, tlb_plru[hit_set_idx][0]};
+                    2'd2: tlb_plru[hit_set_idx] <= {1'b1, tlb_plru[hit_set_idx][1], 1'b0};
+                    2'd3: tlb_plru[hit_set_idx] <= {1'b1, tlb_plru[hit_set_idx][1], 1'b1};
                 endcase
             end
         end

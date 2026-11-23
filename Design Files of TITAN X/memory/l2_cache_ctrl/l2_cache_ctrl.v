@@ -18,7 +18,7 @@ module l2_cache_ctrl #(
 
     // CPU-side AXI4-Lite slave (from crossbar/cores)
     input  wire              s_arvalid,
-    output reg               s_arready,
+    output wire              s_arready,
     input  wire [ADDR_W-1:0] s_araddr,
     input  wire [3:0]        s_arid,
     output reg               s_rvalid,
@@ -27,11 +27,11 @@ module l2_cache_ctrl #(
     output reg  [1:0]        s_rresp,
 
     input  wire              s_awvalid,
-    output reg               s_awready,
+    output wire              s_awready,
     input  wire [ADDR_W-1:0] s_awaddr,
     input  wire [3:0]        s_awid,
     input  wire              s_wvalid,
-    output reg               s_wready,
+    output wire              s_wready,
     input  wire [DATA_W-1:0] s_wdata,
     input  wire [7:0]        s_wstrb,
     output reg               s_bvalid,
@@ -186,6 +186,11 @@ module l2_cache_ctrl #(
         end
     end
 
+    // AXI4-Lite slave handshake readiness
+    assign s_awready = (state == ST_IDLE) && !aw_pend;
+    assign s_wready  = (state == ST_IDLE) && !w_pend;
+    assign s_arready = (state == ST_IDLE) && !aw_pend && !w_pend && !s_awvalid && !s_wvalid;
+
     // Refill & Eviction counters and registers
     reg [2:0]        refill_cnt;
     reg [3:0]        target_way;
@@ -197,9 +202,6 @@ module l2_cache_ctrl #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state             <= ST_IDLE;
-            s_arready         <= 1'b1;
-            s_awready         <= 1'b1;
-            s_wready          <= 1'b1;
             s_rvalid          <= 1'b0;
             s_rdata_reg       <= {DATA_W{1'b0}};
             read_hit_flag     <= 1'b0;
@@ -281,9 +283,6 @@ module l2_cache_ctrl #(
                         req_addr     <= s_araddr;
                         req_id       <= s_arid;
                         req_wr       <= 1'b0;
-                        s_arready    <= 1'b0;
-                        s_awready    <= 1'b0;
-                        s_wready     <= 1'b0;
 
                         // Issue Snoop Filter request
                         sf_req_valid <= 1'b1;
@@ -293,23 +292,7 @@ module l2_cache_ctrl #(
 
                         state        <= ST_LOOKUP;
                     end else begin
-                        // Latch Write Address
-                        if (s_awvalid && s_awready) begin
-                            awaddr_latched <= s_awaddr;
-                            awid_latched   <= s_awid;
-                            aw_pend        <= 1'b1;
-                            s_awready      <= 1'b0;
-                        end
-
-                        // Latch Write Data
-                        if (s_wvalid && s_wready) begin
-                            wdata_latched <= s_wdata;
-                            wstrb_latched <= s_wstrb;
-                            w_pend        <= 1'b1;
-                            s_wready      <= 1'b0;
-                        end
-
-                        // If both AW and W captured, start write transaction
+                        // If both AW and W captured or capturing now, start write transaction
                         if (((s_awvalid && s_awready) || aw_pend) &&
                             ((s_wvalid  && s_wready)  || w_pend)) begin
                             req_addr     <= aw_pend ? awaddr_latched : s_awaddr;
@@ -319,9 +302,6 @@ module l2_cache_ctrl #(
                             req_wr       <= 1'b1;
                             aw_pend      <= 1'b0;
                             w_pend       <= 1'b0;
-                            s_arready    <= 1'b0;
-                            s_awready    <= 1'b0;
-                            s_wready     <= 1'b0;
 
                             // Issue Snoop Filter request
                             sf_req_valid <= 1'b1;
@@ -331,10 +311,17 @@ module l2_cache_ctrl #(
 
                             state        <= ST_LOOKUP;
                         end else begin
-                            if (!aw_pend && !(s_awvalid && s_awready)) s_awready <= 1'b1;
-                            if (!w_pend  && !(s_wvalid  && s_wready))  s_wready  <= 1'b1;
-                            if (!aw_pend && !w_pend && !s_awvalid && !s_wvalid) s_arready <= 1'b1;
-                            else s_arready <= 1'b0;
+                            // Latch whichever arrived first
+                            if (s_awvalid && s_awready) begin
+                                awaddr_latched <= s_awaddr;
+                                awid_latched   <= s_awid;
+                                aw_pend        <= 1'b1;
+                            end
+                            if (s_wvalid && s_wready) begin
+                                wdata_latched  <= s_wdata;
+                                wstrb_latched  <= s_wstrb;
+                                w_pend         <= 1'b1;
+                            end
                         end
                     end
                 end
@@ -602,9 +589,6 @@ module l2_cache_ctrl #(
                     if (s_rvalid && s_rready) begin
                         s_rvalid      <= 1'b0;
                         read_hit_flag <= 1'b0;
-                        s_arready     <= 1'b1;
-                        s_awready     <= 1'b1;
-                        s_wready      <= 1'b1;
                         state         <= ST_IDLE;
                     end
                 end
@@ -617,9 +601,6 @@ module l2_cache_ctrl #(
                     sram_we <= 1'b0;
                     if (s_bvalid && s_bready) begin
                         s_bvalid  <= 1'b0;
-                        s_arready <= 1'b1;
-                        s_awready <= 1'b1;
-                        s_wready  <= 1'b1;
                         state     <= ST_IDLE;
                     end
                 end

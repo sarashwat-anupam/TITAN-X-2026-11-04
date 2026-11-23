@@ -1,0 +1,24 @@
+================================================================================
+ TITAN-X Clean-Room Pre-Synthesis Verification: Full 17-Test Regression Suite
+================================================================================
+[01/17] test_rv64i                   : ✅ PASSED (cycles: 16381, elapsed: 1.41s)
+[02/17] test_rv64m                   : ✅ PASSED (cycles: 16044, elapsed: 2.33s)
+[03/17] test_rv64a                   : ✅ PASSED (cycles: 15022, elapsed: 1.24s)
+[04/17] test_rv64c                   : ✅ PASSED (cycles: 14203, elapsed: 1.23s)
+[05/17] test_rv64fpu                 : ✅ PASSED (cycles: 14216, elapsed: 1.05s)
+[06/17] test_privilege               : ✅ PASSED (cycles: 13969, elapsed: 0.98s)
+[07/17] test_mmu                     : ✅ PASSED (cycles: 36155, elapsed: 2.13s)
+[08/17] test_pmp                     : ✅ PASSED (cycles: 14690, elapsed: 1.22s)
+[09/17] test_monitor                 : ✅ PASSED (cycles: 13285, elapsed: 1.15s)
+[10/17] test_mesi_litmus             : ✅ PASSED (cycles: 29912, elapsed: 1.77s)
+[11/17] test_mesi_contention         : ✅ PASSED (cycles: 60976, elapsed: 2.59s)
+[12/17] test_crossbar_stress         : ✅ PASSED (cycles: 31867, elapsed: 1.08s)
+[13/17] test_interconnect_mpu_qos    : ✅ PASSED (cycles: 20219, elapsed: 0.87s)
+[14/17] test_security_subsystem      : ✅ PASSED (cycles: 29402, elapsed: 2.06s)
+[15/17] test_video_pipeline          : ✅ PASSED (cycles: 81545, elapsed: 2.17s)
+[16/17] test_high_speed_io           : ✅ PASSED (cycles: 19875, elapsed: 0.92s)
+[17/17] test_peripherals             : ✅ PASSED (cycles: 21348, elapsed: 1.34s)
+================================================================================
+ Regression Suite Results: 17/17 PASSED, 0/17 FAILED
+================================================================================
+ALL 17 TESTS PASSED (100% GREEN)!

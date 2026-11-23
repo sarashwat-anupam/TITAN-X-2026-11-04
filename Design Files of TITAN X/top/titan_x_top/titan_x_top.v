@@ -38,6 +38,10 @@ module titan_x_top #(
 
     // Video / Imaging
     input  wire        mipi_rxbyteclkhs,
+    input  wire [31:0] mipi_rxdatahs,
+    input  wire [3:0]  mipi_rxvalidhs,
+    input  wire [3:0]  mipi_rxactivehs,
+    input  wire [3:0]  mipi_rxsyncbhs,
     input  wire        hdmi_clk_pixel,
     input  wire        hdmi_clk_tmds,
     output wire        hdmi_tmds_clk_p,
@@ -51,6 +55,20 @@ module titan_x_top #(
     input  wire [4:0]  uart_rx,
     output wire [1:0]  can_tx,
     input  wire [1:0]  can_rx,
+
+    // SPI Master Interface
+    output wire        spi_clk,
+    output wire        spi_mosi,
+    input  wire        spi_miso,
+    output wire [3:0]  spi_csn,
+
+    // I2C Master Interface
+    output wire        i2c_scl,
+    output wire        i2c_sda_o,
+    input  wire        i2c_sda_i,
+
+    // GPIO Interface
+    inout  wire [31:0] gpio_pad,
 
     // Gate G: Gigabit Ethernet GMII External Interface
     output wire [7:0]  gmii_txd,
@@ -131,7 +149,9 @@ module titan_x_top #(
     // plic_irq[14] = WDT
     // plic_irq[15] = SPI
     // plic_irq[16] = I2C
-    assign plic_irq[19:17] = 3'h0;
+    wire vdma_irq;
+    assign plic_irq[17]    = vdma_irq;
+    assign plic_irq[19:18] = 2'h0;
     // plic_irq[24:20] = UART0-4
     // plic_irq[26:25] = CAN0-1
     // plic_irq[27] = GEM
@@ -152,7 +172,8 @@ module titan_x_top #(
     assign plic_sources[14]      = plic_irq[14]; // Watchdog Timer
     assign plic_sources[15]      = plic_irq[15]; // SPI Master
     assign plic_sources[16]      = plic_irq[16]; // I2C Master
-    assign plic_sources[19:17]   = 3'h0;
+    assign plic_sources[17]      = plic_irq[17]; // VDMA
+    assign plic_sources[19:18]   = 2'h0;
     assign plic_sources[24:20]   = plic_irq[24:20]; // UART0-4
     assign plic_sources[26:25]   = plic_irq[26:25]; // CAN0-1
     assign plic_sources[27]      = plic_irq[27]; // GEM
@@ -953,17 +974,23 @@ module titan_x_top #(
     wire        vdma_s2mm_tready;
     wire [31:0] vdma_mm2s_tdata;
     wire        vdma_mm2s_tvalid, vdma_mm2s_tuser, vdma_mm2s_tlast;
+    wire        hdmi_s_axis_tready;
+
+    // Video stream signals (ISP -> VDMA)
+    wire [31:0] isp_out_tdata;
+    wire        isp_out_tvalid, isp_out_tlast, isp_out_tuser;
 
     vdma u_vdma (
         .clk(clk), .rst_n(rst_n),
-        .s_axis_s2mm_tdata(32'h0), .s_axis_s2mm_tvalid(1'b0), .s_axis_s2mm_tready(vdma_s2mm_tready), .s_axis_s2mm_tuser(1'b0), .s_axis_s2mm_tlast(1'b0),
-        .m_axis_mm2s_tdata(vdma_mm2s_tdata), .m_axis_mm2s_tvalid(vdma_mm2s_tvalid), .m_axis_mm2s_tready(1'b1), .m_axis_mm2s_tuser(vdma_mm2s_tuser), .m_axis_mm2s_tlast(vdma_mm2s_tlast),
+        .s_axis_s2mm_tdata(isp_out_tdata), .s_axis_s2mm_tvalid(isp_out_tvalid), .s_axis_s2mm_tready(vdma_s2mm_tready), .s_axis_s2mm_tuser(isp_out_tuser), .s_axis_s2mm_tlast(isp_out_tlast),
+        .m_axis_mm2s_tdata(vdma_mm2s_tdata), .m_axis_mm2s_tvalid(vdma_mm2s_tvalid), .m_axis_mm2s_tready(hdmi_s_axis_tready), .m_axis_mm2s_tuser(vdma_mm2s_tuser), .m_axis_mm2s_tlast(vdma_mm2s_tlast),
         .m_axi_awvalid(axm_awvalid[14]), .m_axi_awready(axm_awready[14]), .m_axi_awaddr(axm_awaddr[14*40 +: 40]), .m_axi_awlen(), .m_axi_awsize(),
         .m_axi_wvalid(axm_wvalid[14]),   .m_axi_wready(axm_wready[14]),   .m_axi_wdata(axm_wdata[14*64 +: 64]),   .m_axi_wstrb(axm_wstrb[14*8 +: 8]), .m_axi_wlast(axm_wlast[14]),
         .m_axi_bvalid(axm_bvalid[14]),   .m_axi_bready(axm_bready[14]),   .m_axi_bresp(axm_bresp[14*2 +: 2]),
         .m_axi_arvalid(axm_arvalid[14]), .m_axi_arready(axm_arready[14]), .m_axi_araddr(axm_araddr[14*40 +: 40]), .m_axi_arlen(), .m_axi_arsize(),
         .m_axi_rvalid(axm_rvalid[14]),   .m_axi_rready(axm_rready[14]),   .m_axi_rdata(axm_rdata[14*64 +: 64]),   .m_axi_rresp(axm_rresp[14*2 +: 2]), .m_axi_rlast(axm_rlast[14]),
-        .paddr(paddr), .psel(psel_vdma), .penable(penable), .pwrite(pwrite), .pwdata(pwdata), .prdata(prdata_vdma), .pready(), .pslverr()
+        .paddr(paddr), .psel(psel_vdma), .penable(penable), .pwrite(pwrite), .pwdata(pwdata), .prdata(prdata_vdma), .pready(), .pslverr(),
+        .vdma_irq(vdma_irq)
     );
     assign axm_awid[14*4 +: 4] = 4'hE;
     assign axm_arid[14*4 +: 4] = 4'hE;
@@ -1055,7 +1082,9 @@ module titan_x_top #(
         .irq(plic_irq[12])
     );
 
-    ecdsa_engine u_ecdsa (
+    ecdsa_engine #(
+        .FAST_SIM(FAST_SIM)
+    ) u_ecdsa (
         .clk(clk), .rst_n(rst_n),
         .paddr(paddr), .psel(psel_ecdsa), .penable(penable), .pwrite(pwrite), .pwdata(pwdata),
         .prdata(prdata_ecdsa), .pready(), .pslverr(),
@@ -1094,13 +1123,12 @@ module titan_x_top #(
     );
 
     // General Purpose I/O Controller
-    wire [31:0] gpio_io;
     gpio_ctrl u_gpio (
         .clk(clk), .rst_n(rst_n),
         .psel(psel_gpio), .penable(penable), .pwrite(pwrite),
         .paddr(paddr[3:0]), .pwdata(pwdata),
         .prdata(prdata_gpio), .pready(),
-        .gpio_pad(gpio_io),
+        .gpio_pad(gpio_pad),
         .irq(plic_irq[13])
     );
 
@@ -1115,26 +1143,23 @@ module titan_x_top #(
     );
 
     // SPI Master Controller
-    wire       spi_clk_out, spi_mosi_out;
-    wire [3:0] spi_csn_out;
     spi_master u_spi (
         .clk(clk), .rst_n(rst_n),
         .psel(psel_spi), .penable(penable), .pwrite(pwrite),
         .paddr(paddr[3:0]), .pwdata(pwdata),
         .prdata(prdata_spi), .pready(),
-        .spi_clk(spi_clk_out), .spi_mosi(spi_mosi_out), .spi_miso(1'b0),
-        .spi_csn(spi_csn_out),
+        .spi_clk(spi_clk), .spi_mosi(spi_mosi), .spi_miso(spi_miso),
+        .spi_csn(spi_csn),
         .irq(plic_irq[15])
     );
 
     // I2C Master Controller
-    wire i2c_scl_io, i2c_sda_io;
     i2c_master u_i2c (
         .clk(clk), .rst_n(rst_n),
         .psel(psel_i2c), .penable(penable), .pwrite(pwrite),
         .paddr(paddr[3:0]), .pwdata(pwdata),
         .prdata(prdata_i2c), .pready(),
-        .scl_pad(i2c_scl_io), .sda_pad(i2c_sda_io),
+        .scl_pad(i2c_scl), .sda_o(i2c_sda_o), .sda_i(i2c_sda_i),
         .irq(plic_irq[16])
     );
 
@@ -1157,19 +1182,19 @@ module titan_x_top #(
         .rst_n(rst_n), .rxbyteclkhs(mipi_rxbyteclkhs),
         .m_axis_tdata(isp_tdata), .m_axis_tvalid(isp_tvalid), .m_axis_tready(isp_tready), .m_axis_tuser(isp_tuser), .m_axis_tlast(isp_tlast),
         .pclk(clk), .prst_n(rst_n), .paddr(paddr), .psel(psel_mipi), .penable(penable), .pwrite(pwrite), .pwdata(pwdata), .prdata(prdata_mipi), .pready(), .pslverr(),
-        .rxdatahs(32'h0), .rxvalidhs(4'h0), .rxactivehs(4'h0), .rxsyncbhs(4'h0), .rxdata_lp(8'h0)
+        .rxdatahs(mipi_rxdatahs), .rxvalidhs(mipi_rxvalidhs), .rxactivehs(mipi_rxactivehs), .rxsyncbhs(mipi_rxsyncbhs), .rxdata_lp(8'h0)
     );
 
     isp_pipeline u_isp (
         .clk(clk), .rst_n(rst_n),
         .s_axis_tdata(isp_tdata), .s_axis_tvalid(isp_tvalid), .s_axis_tready(isp_tready), .s_axis_tuser(isp_tuser), .s_axis_tlast(isp_tlast),
-        .m_axis_tdata(), .m_axis_tvalid(), .m_axis_tready(1'b1), .m_axis_tlast(), .m_axis_tuser(),
+        .m_axis_tdata(isp_out_tdata), .m_axis_tvalid(isp_out_tvalid), .m_axis_tready(vdma_s2mm_tready), .m_axis_tlast(isp_out_tlast), .m_axis_tuser(isp_out_tuser),
         .paddr(paddr), .psel(psel_isp), .penable(penable), .pwrite(pwrite), .pwdata(pwdata), .prdata(prdata_isp), .pready(), .pslverr()
     );
 
     hdmi_ctrl u_hdmi (
         .clk_pixel(hdmi_clk_pixel), .clk_tmds(hdmi_clk_tmds), .rst_n(rst_n),
-        .s_axis_tdata(32'h0), .s_axis_tvalid(1'b0), .s_axis_tready(), .s_axis_tuser(1'b0), .s_axis_tlast(1'b0),
+        .s_axis_tdata(vdma_mm2s_tdata), .s_axis_tvalid(vdma_mm2s_tvalid), .s_axis_tready(hdmi_s_axis_tready), .s_axis_tuser(vdma_mm2s_tuser), .s_axis_tlast(vdma_mm2s_tlast),
         .tmds_clk_p(hdmi_tmds_clk_p), .tmds_clk_n(hdmi_tmds_clk_n),
         .tmds_data_p(hdmi_tmds_data_p), .tmds_data_n(hdmi_tmds_data_n),
         .pclk(clk), .prst_n(rst_n), .paddr(paddr), .psel(psel_hdmi), .penable(penable), .pwrite(pwrite), .pwdata(pwdata), .prdata(prdata_hdmi), .pready(), .pslverr()

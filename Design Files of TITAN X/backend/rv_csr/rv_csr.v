@@ -43,7 +43,10 @@ module rv_csr #(
     // FPU CSR interface
     input  wire        fflags_we,
     input  wire [4:0]  fflags_in,
-    output wire [2:0]  frm_out
+    output wire [2:0]  frm_out,
+    // PMP configuration outputs
+    output wire [63:0]  pmpcfg0_out,
+    output wire [303:0] pmpaddr_packed_out
 );
 
     // -------------------------------------------------------
@@ -78,6 +81,18 @@ module rv_csr #(
     assign frm_out = frm_q;
 
     reg [63:0] mcycle_q, minstret_q;
+    reg [7:0]  pmpcfg_q  [0:7];
+    reg [37:0] pmpaddr_q [0:7];
+
+    wire [7:0] pmpaddr_locked;
+    assign pmpaddr_locked[0] = pmpcfg_q[0][7] || (pmpcfg_q[1][7] && (pmpcfg_q[1][4:3] == 2'b01));
+    assign pmpaddr_locked[1] = pmpcfg_q[1][7] || (pmpcfg_q[2][7] && (pmpcfg_q[2][4:3] == 2'b01));
+    assign pmpaddr_locked[2] = pmpcfg_q[2][7] || (pmpcfg_q[3][7] && (pmpcfg_q[3][4:3] == 2'b01));
+    assign pmpaddr_locked[3] = pmpcfg_q[3][7] || (pmpcfg_q[4][7] && (pmpcfg_q[4][4:3] == 2'b01));
+    assign pmpaddr_locked[4] = pmpcfg_q[4][7] || (pmpcfg_q[5][7] && (pmpcfg_q[5][4:3] == 2'b01));
+    assign pmpaddr_locked[5] = pmpcfg_q[5][7] || (pmpcfg_q[6][7] && (pmpcfg_q[6][4:3] == 2'b01));
+    assign pmpaddr_locked[6] = pmpcfg_q[6][7] || (pmpcfg_q[7][7] && (pmpcfg_q[7][4:3] == 2'b01));
+    assign pmpaddr_locked[7] = pmpcfg_q[7][7];
 
     // RV64GC: Base RV64 (2 << 62) + U(20) + S(18) + M(12) + I(8) + F(5) + D(3) + C(2) + A(0)
     localparam [63:0] MISA_RV64GC =
@@ -185,7 +200,20 @@ module rv_csr #(
             12'hC00:    csr_rdata = mcycle_q;            // cycle alias
             12'hC01:    csr_rdata = mcycle_q;            // time alias
             12'hC02:    csr_rdata = minstret_q;          // instret alias
-            default:    csr_rdata = 64'h0;               // PMP and HPM read 0
+            12'h3A0:    csr_rdata = {pmpcfg_q[7], pmpcfg_q[6], pmpcfg_q[5], pmpcfg_q[4],
+                                     pmpcfg_q[3], pmpcfg_q[2], pmpcfg_q[1], pmpcfg_q[0]};
+            12'h3A1:    csr_rdata = 64'h0;
+            12'h3A2:    csr_rdata = 64'h0;
+            12'h3A3:    csr_rdata = 64'h0;
+            12'h3B0:    csr_rdata = {26'h0, pmpaddr_q[0]};
+            12'h3B1:    csr_rdata = {26'h0, pmpaddr_q[1]};
+            12'h3B2:    csr_rdata = {26'h0, pmpaddr_q[2]};
+            12'h3B3:    csr_rdata = {26'h0, pmpaddr_q[3]};
+            12'h3B4:    csr_rdata = {26'h0, pmpaddr_q[4]};
+            12'h3B5:    csr_rdata = {26'h0, pmpaddr_q[5]};
+            12'h3B6:    csr_rdata = {26'h0, pmpaddr_q[6]};
+            12'h3B7:    csr_rdata = {26'h0, pmpaddr_q[7]};
+            default:    csr_rdata = 64'h0;               // Other PMP and HPM read 0
         endcase
     end
 
@@ -227,6 +255,22 @@ module rv_csr #(
             frm_q           <= 3'h0;
             mcycle_q        <= 64'h0;
             minstret_q      <= 64'h0;
+            pmpcfg_q[0]     <= 8'h0;
+            pmpcfg_q[1]     <= 8'h0;
+            pmpcfg_q[2]     <= 8'h0;
+            pmpcfg_q[3]     <= 8'h0;
+            pmpcfg_q[4]     <= 8'h0;
+            pmpcfg_q[5]     <= 8'h0;
+            pmpcfg_q[6]     <= 8'h0;
+            pmpcfg_q[7]     <= 8'h0;
+            pmpaddr_q[0]    <= 38'h0;
+            pmpaddr_q[1]    <= 38'h0;
+            pmpaddr_q[2]    <= 38'h0;
+            pmpaddr_q[3]    <= 38'h0;
+            pmpaddr_q[4]    <= 38'h0;
+            pmpaddr_q[5]    <= 38'h0;
+            pmpaddr_q[6]    <= 38'h0;
+            pmpaddr_q[7]    <= 38'h0;
         end else begin
             // Performance counters
             mcycle_q <= mcycle_q + 64'd1;
@@ -321,7 +365,25 @@ module rv_csr #(
                     12'h143: stval_q         <= csr_wdata;
                     12'h144: mip_s_soft_q    <= csr_wdata[1];
                     12'h180: satp_q          <= csr_wdata;
-                    default: ;                                // PMP, HPM, RO ignored
+                    12'h3A0: begin
+                        if (!pmpcfg_q[0][7]) pmpcfg_q[0] <= {csr_wdata[7],  2'b00, csr_wdata[4:0]};
+                        if (!pmpcfg_q[1][7]) pmpcfg_q[1] <= {csr_wdata[15], 2'b00, csr_wdata[12:8]};
+                        if (!pmpcfg_q[2][7]) pmpcfg_q[2] <= {csr_wdata[23], 2'b00, csr_wdata[20:16]};
+                        if (!pmpcfg_q[3][7]) pmpcfg_q[3] <= {csr_wdata[31], 2'b00, csr_wdata[28:24]};
+                        if (!pmpcfg_q[4][7]) pmpcfg_q[4] <= {csr_wdata[39], 2'b00, csr_wdata[36:32]};
+                        if (!pmpcfg_q[5][7]) pmpcfg_q[5] <= {csr_wdata[47], 2'b00, csr_wdata[44:40]};
+                        if (!pmpcfg_q[6][7]) pmpcfg_q[6] <= {csr_wdata[55], 2'b00, csr_wdata[52:48]};
+                        if (!pmpcfg_q[7][7]) pmpcfg_q[7] <= {csr_wdata[63], 2'b00, csr_wdata[60:56]};
+                    end
+                    12'h3B0: if (!pmpaddr_locked[0]) pmpaddr_q[0] <= csr_wdata[37:0];
+                    12'h3B1: if (!pmpaddr_locked[1]) pmpaddr_q[1] <= csr_wdata[37:0];
+                    12'h3B2: if (!pmpaddr_locked[2]) pmpaddr_q[2] <= csr_wdata[37:0];
+                    12'h3B3: if (!pmpaddr_locked[3]) pmpaddr_q[3] <= csr_wdata[37:0];
+                    12'h3B4: if (!pmpaddr_locked[4]) pmpaddr_q[4] <= csr_wdata[37:0];
+                    12'h3B5: if (!pmpaddr_locked[5]) pmpaddr_q[5] <= csr_wdata[37:0];
+                    12'h3B6: if (!pmpaddr_locked[6]) pmpaddr_q[6] <= csr_wdata[37:0];
+                    12'h3B7: if (!pmpaddr_locked[7]) pmpaddr_q[7] <= csr_wdata[37:0];
+                    default: ;                                // Other PMP, HPM, RO ignored
                 endcase
             end
         end
@@ -335,6 +397,10 @@ module rv_csr #(
     assign medeleg_out = medeleg_q;
     assign mideleg_out = mideleg_q;
     assign satp_out    = satp_q;
+    assign pmpcfg0_out = {pmpcfg_q[7], pmpcfg_q[6], pmpcfg_q[5], pmpcfg_q[4],
+                          pmpcfg_q[3], pmpcfg_q[2], pmpcfg_q[1], pmpcfg_q[0]};
+    assign pmpaddr_packed_out = {pmpaddr_q[7], pmpaddr_q[6], pmpaddr_q[5], pmpaddr_q[4],
+                                 pmpaddr_q[3], pmpaddr_q[2], pmpaddr_q[1], pmpaddr_q[0]};
 
     wire m_irq_pend = (| (mip_val & mie_q & ~mideleg_q)) &&
                       ((priv_mode_out < `PRIV_M) || mstatus_q[3]);

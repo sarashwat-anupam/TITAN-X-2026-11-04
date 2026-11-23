@@ -76,7 +76,10 @@ module mipi_csi2_rx #(
             axis_tlast_reg <= 1'b0;
             axis_tuser_reg <= 1'b0;
         end else begin
-            if (|rxvalidhs) begin
+            if (axis_tvalid_reg && !m_axis_tready) begin
+                // AXI4-Stream handshake: hold TVALID and TDATA until TREADY is asserted
+                axis_tvalid_reg <= 1'b1;
+            end else if (|rxvalidhs) begin
                 axis_tvalid_reg <= 1'b1;
                 // Mock unpacking logic
                 axis_tdata_reg <= rxdatahs;
@@ -96,6 +99,15 @@ module mipi_csi2_rx #(
             status_reg <= 32'h0;
         end else begin
             status_reg <= {31'h0, |rxactivehs}; // Link active status
+        end
+    end
+
+    reg mipi_ready_reg;
+    always @(posedge rxbyteclkhs or negedge rst_n) begin
+        if (!rst_n) begin
+            mipi_ready_reg <= 1'b1;
+        end else begin
+            mipi_ready_reg <= (!axis_tvalid_reg || m_axis_tready);
         end
     end
 

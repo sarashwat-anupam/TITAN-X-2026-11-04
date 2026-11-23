@@ -138,7 +138,7 @@ module rv_ptw (
                             // 1GB superpage leaf at L2
                             fill_valid <= 1'b1;
                             fill_va    <= va_saved;
-                            fill_pa    <= {pte_ppn[25:18], va_saved[29:12], 12'h0};
+                            fill_pa    <= {pte_ppn[25:18], 18'h0, 12'h0};
                             fill_asid  <= asid_saved;
                             fill_perm  <= ptw_rdata[7:0];
                             fill_level <= 2'd2;
@@ -174,7 +174,7 @@ module rv_ptw (
                             // 2MB superpage leaf at L1
                             fill_valid <= 1'b1;
                             fill_va    <= va_saved;
-                            fill_pa    <= {pte_ppn[25:9], va_saved[20:12], 12'h0};
+                            fill_pa    <= {pte_ppn[25:9], 9'h0, 12'h0};
                             fill_asid  <= asid_saved;
                             fill_perm  <= ptw_rdata[7:0];
                             fill_level <= 2'd1;

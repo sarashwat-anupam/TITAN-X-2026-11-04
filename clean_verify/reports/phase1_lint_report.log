@@ -1,0 +1,29 @@
+%Warning-UNSIGNED: backend/rv_pmp/rv_pmp.v:108:37: Comparison is constant due to unsigned arithmetic
+                                                 : ... note: In instance 'titan_x_top.gen_cores[3].u_core.u_pmp_mem'
+  108 |             wire tor_match = (paddr >= {addr_prev[35:0], 2'b00}) &&
+      |                                     ^~
+                   backend/rv_core_top/rv_core_top.v:209:1: ... note: In file included from 'rv_core_top.v'
+                   top/titan_x_top/titan_x_top.v:536:1: ... note: In file included from 'titan_x_top.v'
+                   ... For warning description see https://verilator.org/warn/UNSIGNED?v=5.020
+                   ... Use "/* verilator lint_off UNSIGNED */" and lint_on around source to disable this message.
+%Warning-CASEINCOMPLETE: backend/rv_monitor_core/rv_monitor_core.v:121:17: Case values incompletely covered (example pattern 0x3)
+  121 |                 case (fstate)
+      |                 ^~~~
+                         top/titan_x_top/titan_x_top.v:599:1: ... note: In file included from 'titan_x_top.v'
+%Warning-CASEINCOMPLETE: backend/rv_monitor_core/rv_monitor_core.v:155:17: Case values incompletely covered (example pattern 0x3)
+  155 |                 case (fstate)
+      |                 ^~~~
+                         top/titan_x_top/titan_x_top.v:599:1: ... note: In file included from 'titan_x_top.v'
+%Warning-CASEINCOMPLETE: backend/rv_monitor_core/rv_monitor_core.v:389:13: Case values incompletely covered (example pattern 0x4)
+  389 |             case (mstate)
+      |             ^~~~
+                         top/titan_x_top/titan_x_top.v:599:1: ... note: In file included from 'titan_x_top.v'
+%Warning-CASEINCOMPLETE: video/vdma/vdma.v:257:13: Case values incompletely covered (example pattern 0x5)
+  257 |             case (m_state)
+      |             ^~~~
+                         top/titan_x_top/titan_x_top.v:985:1: ... note: In file included from 'titan_x_top.v'
+%Warning-CASEINCOMPLETE: video/vdma/vdma.v:357:13: Case values incompletely covered (example pattern 0x5)
+  357 |             case (s_state)
+      |             ^~~~
+                         top/titan_x_top/titan_x_top.v:985:1: ... note: In file included from 'titan_x_top.v'
+%Error: Exiting due to 6 warning(s)

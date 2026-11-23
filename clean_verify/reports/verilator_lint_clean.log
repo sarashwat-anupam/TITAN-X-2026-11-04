@@ -1,0 +1,493 @@
+%Warning-WIDTHEXPAND: security/ecdsa_engine/ecdsa_engine.v:43:35: Operator ADD expects 512 bits on the RHS, but RHS's VARREF 'a' generates 256 bits.
+                                                                : ... note: In instance 'titan_x_top.u_secure_boot.u_ecdsa.u_mont_mul'
+   43 |                 res   <= ((512'd0 + a) * (512'd0 + b)) % (512'd0 + m);
+      |                                   ^
+                      top/titan_x_top/titan_x_top.v:1060:1: ... note: In file included from 'titan_x_top.v'
+                      ... For warning description see https://verilator.org/warn/WIDTHEXPAND?v=5.020
+                      ... Use "/* verilator lint_off WIDTHEXPAND */" and lint_on around source to disable this message.
+%Warning-WIDTHEXPAND: security/ecdsa_engine/ecdsa_engine.v:43:50: Operator ADD expects 512 bits on the RHS, but RHS's VARREF 'b' generates 256 bits.
+                                                                : ... note: In instance 'titan_x_top.u_secure_boot.u_ecdsa.u_mont_mul'
+   43 |                 res   <= ((512'd0 + a) * (512'd0 + b)) % (512'd0 + m);
+      |                                                  ^
+                      top/titan_x_top/titan_x_top.v:1060:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/ecdsa_engine/ecdsa_engine.v:43:66: Operator ADD expects 512 bits on the RHS, but RHS's VARREF 'm' generates 256 bits.
+                                                                : ... note: In instance 'titan_x_top.u_secure_boot.u_ecdsa.u_mont_mul'
+   43 |                 res   <= ((512'd0 + a) * (512'd0 + b)) % (512'd0 + m);
+      |                                                                  ^
+                      top/titan_x_top/titan_x_top.v:1060:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: security/ecdsa_engine/ecdsa_engine.v:43:23: Operator ASSIGNDLY expects 256 bits on the Assign RHS, but Assign RHS's MODDIV generates 512 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot.u_ecdsa.u_mont_mul'
+   43 |                 res   <= ((512'd0 + a) * (512'd0 + b)) % (512'd0 + m);
+      |                       ^~
+                     top/titan_x_top/titan_x_top.v:1060:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: backend/rv_fpu/rv_fpu.v:303:43: Operator ASSIGNDLY expects 50 bits on the Assign RHS, but Assign RHS's SEL generates 25 bits.
+                                                    : ... note: In instance 'titan_x_top.gen_cores[3].u_core.u_fpu'
+  303 |                             s2_result_sig <= s1_sig_a[24:0];
+      |                                           ^~
+                      backend/rv_core_top/rv_core_top.v:915:1: ... note: In file included from 'rv_core_top.v'
+                      top/titan_x_top/titan_x_top.v:515:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: backend/rv_fpu/rv_fpu.v:325:45: Operator ASSIGNDLY expects 106 bits on the Assign RHS, but Assign RHS's REPLICATE generates 54 bits.
+                                                    : ... note: In instance 'titan_x_top.gen_cores[3].u_core.u_fpu'
+  325 |                             s2_dp_result_sig<= {dp_mul_result[105:53], 1'b0};
+      |                                             ^~
+                      backend/rv_core_top/rv_core_top.v:915:1: ... note: In file included from 'rv_core_top.v'
+                      top/titan_x_top/titan_x_top.v:515:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: backend/rv_fpu/rv_fpu.v:330:45: Operator ASSIGNDLY expects 106 bits on the Assign RHS, but Assign RHS's VARREF 's1_dp_sig_a' generates 54 bits.
+                                                    : ... note: In instance 'titan_x_top.gen_cores[3].u_core.u_fpu'
+  330 |                             s2_dp_result_sig<= s1_dp_sig_a;
+      |                                             ^~
+                      backend/rv_core_top/rv_core_top.v:915:1: ... note: In file included from 'rv_core_top.v'
+                      top/titan_x_top/titan_x_top.v:515:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: backend/rv_fpu/rv_fpu.v:379:39: Operator ASSIGNDLY expects 26 bits on the Assign RHS, but Assign RHS's COND generates 50 bits.
+                                                   : ... note: In instance 'titan_x_top.gen_cores[3].u_core.u_fpu'
+  379 |                         s3_result_sig <= (sp_lzc >= 6'd25) ?
+      |                                       ^~
+                     backend/rv_core_top/rv_core_top.v:915:1: ... note: In file included from 'rv_core_top.v'
+                     top/titan_x_top/titan_x_top.v:515:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: backend/rv_fpu/rv_fpu.v:385:34: Operator ASSIGNDLY expects 12 bits on the Assign RHS, but Assign RHS's VARREF 's2_dp_result_exp' generates 11 bits.
+                                                    : ... note: In instance 'titan_x_top.gen_cores[3].u_core.u_fpu'
+  385 |                 s3_dp_result_exp <= s2_dp_result_exp;
+      |                                  ^~
+                      backend/rv_core_top/rv_core_top.v:915:1: ... note: In file included from 'rv_core_top.v'
+                      top/titan_x_top/titan_x_top.v:515:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: backend/rv_fpu/rv_fpu.v:417:30: Operator ASSIGNW expects 11 bits on the Assign RHS, but Assign RHS's VARREF 's3_dp_result_exp' generates 12 bits.
+                                                   : ... note: In instance 'titan_x_top.gen_cores[3].u_core.u_fpu'
+  417 |     wire [10:0] dp_exp_final = s3_dp_result_exp;
+      |                              ^
+                     backend/rv_core_top/rv_core_top.v:915:1: ... note: In file included from 'rv_core_top.v'
+                     top/titan_x_top/titan_x_top.v:515:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: backend/rv_dcache/rv_dcache.v:380:53: Operator ASSIGNDLY expects 7 bits on the Assign RHS, but Assign RHS's REPLICATE generates 6 bits.
+                                                          : ... note: In instance 'titan_x_top.gen_cores[3].u_core.gen_dcache.u_dcache'
+  380 |                             3'd2: plru_state[index] <= {plru[6:5], 1'b0, plru[3], 1'b1, 1'b1};
+      |                                                     ^~
+                      backend/rv_core_top/rv_core_top.v:678:1: ... note: In file included from 'rv_core_top.v'
+                      top/titan_x_top/titan_x_top.v:515:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: backend/rv_dcache/rv_dcache.v:381:53: Operator ASSIGNDLY expects 7 bits on the Assign RHS, but Assign RHS's REPLICATE generates 6 bits.
+                                                          : ... note: In instance 'titan_x_top.gen_cores[3].u_core.gen_dcache.u_dcache'
+  381 |                             3'd3: plru_state[index] <= {plru[6:5], 1'b1, plru[3], 1'b1, 1'b1};
+      |                                                     ^~
+                      backend/rv_core_top/rv_core_top.v:678:1: ... note: In file included from 'rv_core_top.v'
+                      top/titan_x_top/titan_x_top.v:515:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: backend/rv_dcache/rv_dcache.v:437:38: Operator EQ expects 32 or 7 bits on the LHS, but LHS's VARREF 'fsi' generates 6 bits.
+                                                          : ... note: In instance 'titan_x_top.gen_cores[3].u_core.gen_dcache.u_dcache'
+  437 |                     end else if (fsi == SETS - 1 && fsw == 3'd7) begin
+      |                                      ^~
+                      backend/rv_core_top/rv_core_top.v:678:1: ... note: In file included from 'rv_core_top.v'
+                      top/titan_x_top/titan_x_top.v:515:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: backend/rv_dcache/rv_dcache.v:467:62: Operator ADD expects 32 or 7 bits on the LHS, but LHS's VARREF 'evict_beat' generates 3 bits.
+                                                          : ... note: In instance 'titan_x_top.gen_cores[3].u_core.gen_dcache.u_dcache'
+  467 |                             m_wdata <= evict_line[(evict_beat+3'd1)*64 +: 64];
+      |                                                              ^
+                      backend/rv_core_top/rv_core_top.v:678:1: ... note: In file included from 'rv_core_top.v'
+                      top/titan_x_top/titan_x_top.v:515:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: backend/rv_dcache/rv_dcache.v:467:62: Operator ADD expects 32 or 7 bits on the RHS, but RHS's CONST '3'h1' generates 3 bits.
+                                                          : ... note: In instance 'titan_x_top.gen_cores[3].u_core.gen_dcache.u_dcache'
+  467 |                             m_wdata <= evict_line[(evict_beat+3'd1)*64 +: 64];
+      |                                                              ^
+                      backend/rv_core_top/rv_core_top.v:678:1: ... note: In file included from 'rv_core_top.v'
+                      top/titan_x_top/titan_x_top.v:515:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: backend/rv_mem/rv_mem.v:160:74: Operator AND expects 64 bits on the RHS, but RHS's CONST '32'hffffffff' generates 32 bits.
+                                                    : ... note: In instance 'titan_x_top.gen_cores[3].u_core.u_mem'
+  160 |     wire [31:0] amo_old_32 = (dmem_rdata >> {store_addr_q[2:0], 3'b000}) & 32'hFFFF_FFFF;
+      |                                                                          ^
+                      backend/rv_core_top/rv_core_top.v:529:1: ... note: In file included from 'rv_core_top.v'
+                      top/titan_x_top/titan_x_top.v:515:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: backend/rv_mem/rv_mem.v:160:28: Operator ASSIGNW expects 32 bits on the Assign RHS, but Assign RHS's AND generates 64 bits.
+                                                   : ... note: In instance 'titan_x_top.gen_cores[3].u_core.u_mem'
+  160 |     wire [31:0] amo_old_32 = (dmem_rdata >> {store_addr_q[2:0], 3'b000}) & 32'hFFFF_FFFF;
+      |                            ^
+                     backend/rv_core_top/rv_core_top.v:529:1: ... note: In file included from 'rv_core_top.v'
+                     top/titan_x_top/titan_x_top.v:515:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: interconnect/axi4_burst_to_lite.v:160:57: Operator ADD expects 40 bits on the LHS, but LHS's VARREF 'r_cnt' generates 8 bits.
+                                                              : ... note: In instance 'titan_x_top.u_l2_cache.u_b2l'
+  160 |                             m_araddr <= r_base + (r_cnt + 8'h1) * BEAT_BYTES;
+      |                                                         ^
+                      backend/rv_core_top/rv_core_top.v:270:1: ... note: In file included from 'rv_core_top.v'
+                      top/titan_x_top/titan_x_top.v:515:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: interconnect/axi4_burst_to_lite.v:160:57: Operator ADD expects 40 bits on the RHS, but RHS's CONST '8'h1' generates 8 bits.
+                                                              : ... note: In instance 'titan_x_top.u_l2_cache.u_b2l'
+  160 |                             m_araddr <= r_base + (r_cnt + 8'h1) * BEAT_BYTES;
+      |                                                         ^
+                      backend/rv_core_top/rv_core_top.v:270:1: ... note: In file included from 'rv_core_top.v'
+                      top/titan_x_top/titan_x_top.v:515:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: interconnect/axi4_burst_to_lite.v:286:58: Operator ADD expects 40 bits on the LHS, but LHS's VARREF 'w_cnt' generates 8 bits.
+                                                              : ... note: In instance 'titan_x_top.u_l2_cache.u_b2l'
+  286 |                             m_awaddr  <= w_base + (w_cnt + 8'h1) * BEAT_BYTES;
+      |                                                          ^
+                      backend/rv_core_top/rv_core_top.v:270:1: ... note: In file included from 'rv_core_top.v'
+                      top/titan_x_top/titan_x_top.v:515:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: interconnect/axi4_burst_to_lite.v:286:58: Operator ADD expects 40 bits on the RHS, but RHS's CONST '8'h1' generates 8 bits.
+                                                              : ... note: In instance 'titan_x_top.u_l2_cache.u_b2l'
+  286 |                             m_awaddr  <= w_base + (w_cnt + 8'h1) * BEAT_BYTES;
+      |                                                          ^
+                      backend/rv_core_top/rv_core_top.v:270:1: ... note: In file included from 'rv_core_top.v'
+                      top/titan_x_top/titan_x_top.v:515:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: frontend/rv_icache/rv_icache.v:84:43: Operator XOR expects 32 bits on the LHS, but LHS's VARREF 'compute_ecc' generates 7 bits.
+                                                          : ... note: In instance 'titan_x_top.gen_cores[3].u_core.gen_icache.u_icache'
+   84 |                 compute_ecc = compute_ecc ^ (data[b] ? (b+1) : 0);
+      |                                           ^
+                      backend/rv_core_top/rv_core_top.v:242:1: ... note: In file included from 'rv_core_top.v'
+                      top/titan_x_top/titan_x_top.v:515:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: frontend/rv_icache/rv_icache.v:84:29: Operator ASSIGN expects 7 bits on the Assign RHS, but Assign RHS's XOR generates 32 bits.
+                                                         : ... note: In instance 'titan_x_top.gen_cores[3].u_core.gen_icache.u_icache'
+   84 |                 compute_ecc = compute_ecc ^ (data[b] ? (b+1) : 0);
+      |                             ^
+                     backend/rv_core_top/rv_core_top.v:242:1: ... note: In file included from 'rv_core_top.v'
+                     top/titan_x_top/titan_x_top.v:515:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: frontend/rv_icache/rv_icache.v:138:29: Operator ASSIGNW expects 6 bits on the Assign RHS, but Assign RHS's SEL generates 3 bits.
+                                                           : ... note: In instance 'titan_x_top.gen_cores[3].u_core.gen_icache.u_icache'
+  138 |     wire [5:0]  word_offset = offset[5:3];    
+      |                             ^
+                      backend/rv_core_top/rv_core_top.v:242:1: ... note: In file included from 'rv_core_top.v'
+                      top/titan_x_top/titan_x_top.v:515:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: security/ecdsa_engine/ecdsa_engine.v:167:49: Operator ASSIGN expects 256 bits on the Assign RHS, but Assign RHS's SUB generates 257 bits.
+                                                                : ... note: In instance 'titan_x_top.u_secure_boot.u_ecdsa'
+  167 |             if (sum >= {1'b0, P_256}) mod_add_p = sum - P_256;
+      |                                                 ^
+                     top/titan_x_top/titan_x_top.v:1060:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: security/ecdsa_engine/ecdsa_engine.v:595:36: Bit extraction of var[255:0] requires 8 bit index, not 9 bits.
+                                                                : ... note: In instance 'titan_x_top.u_secure_boot.u_ecdsa'
+  595 |                         b1 = u1_val[straus_idx];
+      |                                    ^
+                     top/titan_x_top/titan_x_top.v:1060:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: security/ecdsa_engine/ecdsa_engine.v:596:36: Bit extraction of var[255:0] requires 8 bit index, not 9 bits.
+                                                                : ... note: In instance 'titan_x_top.u_secure_boot.u_ecdsa'
+  596 |                         b2 = u2_val[straus_idx];
+      |                                    ^
+                     top/titan_x_top/titan_x_top.v:1060:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: peripherals/sha256_engine/sha256_engine.v:95:29: Operator EQ expects 32 bits on the RHS, but RHS's SEL generates 4 bits.
+                                                                     : ... note: In instance 'titan_x_top.u_secure_boot.u_sha256'
+   95 |             end else if (wi == rem[5:2]) begin
+      |                             ^~
+                      top/titan_x_top/titan_x_top.v:1053:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: peripherals/sha256_engine/sha256_engine.v:118:29: Operator EQ expects 32 bits on the RHS, but RHS's SEL generates 4 bits.
+                                                                      : ... note: In instance 'titan_x_top.u_secure_boot.u_sha256'
+  118 |             end else if (wi == rem[5:2]) begin
+      |                             ^~
+                      top/titan_x_top/titan_x_top.v:1053:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: interconnect/axi4_crossbar/axi4_crossbar.v:205:37: Operator ADD expects 32 bits on the LHS, but LHS's ARRAYSEL generates 4 bits.
+                                                                       : ... note: In instance 'titan_x_top.u_crossbar'
+  205 |                 mm_aw = rr_aw[s_aw] + k_aw; if (mm_aw >= NM) mm_aw = mm_aw - NM;
+      |                                     ^
+                      top/titan_x_top/titan_x_top.v:309:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: interconnect/axi4_crossbar/axi4_crossbar.v:225:37: Operator ADD expects 32 bits on the LHS, but LHS's ARRAYSEL generates 4 bits.
+                                                                       : ... note: In instance 'titan_x_top.u_crossbar'
+  225 |                 mm_ar = rr_ar[s_ar] + k_ar; if (mm_ar >= NM) mm_ar = mm_ar - NM;
+      |                                     ^
+                      top/titan_x_top/titan_x_top.v:309:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: interconnect/axi4_crossbar/axi4_crossbar.v:243:34: Operator ADD expects 32 bits on the LHS, but LHS's ARRAYSEL generates 4 bits.
+                                                                       : ... note: In instance 'titan_x_top.u_crossbar'
+  243 |                 mm_w = rr_w[s_w] + k_w; if (mm_w >= NM) mm_w = mm_w - NM;
+      |                                  ^
+                      top/titan_x_top/titan_x_top.v:309:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: interconnect/axi4_crossbar/axi4_crossbar.v:259:60: Bit extraction of var[15:0] requires 4 bit index, not 5 bits.
+                                                                      : ... note: In instance 'titan_x_top.u_crossbar'
+  259 |         assign wl_hs[gs] = (w_sel[gs] != 5'd31) && m_wvalid[w_sel[gs]] &&
+      |                                                            ^
+                     top/titan_x_top/titan_x_top.v:309:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: interconnect/axi4_crossbar/axi4_crossbar.v:260:35: Bit extraction of var[15:0] requires 4 bit index, not 5 bits.
+                                                                      : ... note: In instance 'titan_x_top.u_crossbar'
+  260 |                            m_wlast[w_sel[gs]]   && s_wready[gs];
+      |                                   ^
+                     top/titan_x_top/titan_x_top.v:309:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: interconnect/axi4_crossbar/axi4_crossbar.v:413:52: Bit extraction of var[15:0] requires 4 bit index, not 5 bits.
+                                                                      : ... note: In instance 'titan_x_top.u_crossbar'
+  413 |                 if ((w_sel[s] != 5'd31) && m_wvalid[w_sel[s]] && s_wready[s])
+      |                                                    ^
+                     top/titan_x_top/titan_x_top.v:309:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: interconnect/axi4_crossbar/axi4_crossbar.v:435:23: Operator ASSIGN expects 32 bits on the Assign RHS, but Assign RHS's ARRAYSEL generates 4 bits.
+                                                                       : ... note: In instance 'titan_x_top.u_crossbar'
+  435 |                 own_m = b_own[sj][b_rp[sj]];
+      |                       ^
+                      top/titan_x_top/titan_x_top.v:309:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: interconnect/axi4_crossbar/axi4_crossbar.v:439:23: Operator ASSIGN expects 32 bits on the Assign RHS, but Assign RHS's ARRAYSEL generates 4 bits.
+                                                                       : ... note: In instance 'titan_x_top.u_crossbar'
+  439 |                 own_m = r_own[sj][r_rp[sj]];
+      |                       ^
+                      top/titan_x_top/titan_x_top.v:309:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: interconnect/axi4_crossbar/axi4_crossbar.v:474:64: Bit extraction of var[15:0] requires 4 bit index, not 5 bits.
+                                                                      : ... note: In instance 'titan_x_top.u_crossbar'
+  474 |         assign s_wvalid[gs2] = (w_sel[gs2] != 5'd31) ? m_wvalid[w_sel[gs2]] : 1'b0;
+      |                                                                ^
+                     top/titan_x_top/titan_x_top.v:309:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: interconnect/axi4_crossbar/axi4_crossbar.v:479:63: Bit extraction of var[15:0] requires 4 bit index, not 5 bits.
+                                                                      : ... note: In instance 'titan_x_top.u_crossbar'
+  479 |         assign s_wlast[gs2]  = (w_sel[gs2] != 5'd31) ? m_wlast[w_sel[gs2]] : 1'b0;
+      |                                                               ^
+                     top/titan_x_top/titan_x_top.v:309:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: interconnect/interconnect_mpu/interconnect_mpu.v:130:52: Operator ASSIGNDLY expects 8 bits on the Assign RHS, but Assign RHS's SEL generates 4 bits.
+                                                                             : ... note: In instance 'titan_x_top.u_interconnect_mpu'
+  130 |                     reg_base_addr[reg_idx][39:32]  <= pwdata[7:4];
+      |                                                    ^~
+                      top/titan_x_top/titan_x_top.v:280:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: interconnect/interconnect_mpu/interconnect_mpu.v:131:52: Operator ASSIGNDLY expects 8 bits on the Assign RHS, but Assign RHS's SEL generates 4 bits.
+                                                                             : ... note: In instance 'titan_x_top.u_interconnect_mpu'
+  131 |                     reg_limit_addr[reg_idx][39:32] <= pwdata[11:8];
+      |                                                    ^~
+                      top/titan_x_top/titan_x_top.v:280:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: interconnect/interconnect_mpu/interconnect_mpu.v:142:27: Operator ASSIGN expects 32 bits on the Assign RHS, but Assign RHS's REPLICATE generates 40 bits.
+                                                                            : ... note: In instance 'titan_x_top.u_interconnect_mpu'
+  142 |             2'b11: prdata = {20'h0, reg_limit_addr[reg_idx][39:32], reg_base_addr[reg_idx][39:32], 1'b0, reg_perm[reg_idx], reg_valid[reg_idx]};
+      |                           ^
+                     top/titan_x_top/titan_x_top.v:280:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: interconnect/qos_controller/qos_controller.v:64:32: Operator LT expects 32 or 5 bits on the LHS, but LHS's VARREF 'm_idx' generates 4 bits.
+                                                                        : ... note: In instance 'titan_x_top.u_qos_controller'
+   64 |             end else if (m_idx < NM) begin
+      |                                ^
+                      top/titan_x_top/titan_x_top.v:263:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: interconnect/qos_controller/qos_controller.v:99:28: Operator LT expects 32 or 5 bits on the LHS, but LHS's VARREF 'm_idx' generates 4 bits.
+                                                                        : ... note: In instance 'titan_x_top.u_qos_controller'
+   99 |         end else if (m_idx < NM) begin
+      |                            ^
+                      top/titan_x_top/titan_x_top.v:263:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: peripherals/gpio_ctrl/gpio_ctrl.v:53:29: Logical operator COND expects 1 bit on the Conditional Test, but Conditional Test's VARREF 'int_pol' generates 32 bits.
+                                                            : ... note: In instance 'titan_x_top.u_gpio'
+   53 |         int_raw = (int_pol) ? in_sync : ~in_sync;  
+      |                             ^
+                     top/titan_x_top/titan_x_top.v:1100:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: backend/clint/clint.v:64:33: Bit extraction of var[4:0] requires 3 bit index, not 4 bits.
+                                                : ... note: In instance 'titan_x_top.u_clint'
+   64 |                         msip_reg[paddr[5:2]] <= pwdata[0];
+      |                                 ^
+                     top/titan_x_top/titan_x_top.v:1089:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: backend/clint/clint.v:85:51: Bit extraction of var[4:0] requires 3 bit index, not 4 bits.
+                                                : ... note: In instance 'titan_x_top.u_clint'
+   85 |                         prdata <= {31'h0, msip_reg[paddr[5:2]]};
+      |                                                   ^
+                     top/titan_x_top/titan_x_top.v:1089:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:264:52: Operator ADD expects 24 bits on the RHS, but RHS's CONST '12'h1' generates 12 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  264 |                         timeout_cnt <= timeout_cnt + 12'd1;
+      |                                                    ^
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:265:41: Operator GTE expects 24 bits on the RHS, but RHS's CONST '12'h3e8' generates 12 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  265 |                         if (timeout_cnt >= 12'd1000) begin
+      |                                         ^~
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:270:37: Operator ASSIGNDLY expects 24 bits on the Assign RHS, but Assign RHS's CONST '12'h0' generates 12 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  270 |                         timeout_cnt <= 12'h0;
+      |                                     ^~
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:280:39: Operator ASSIGNDLY expects 32 bits on the Assign RHS, but Assign RHS's SEL generates 16 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  280 |                             img_len   <= envm_rdata[15:0];
+      |                                       ^~
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: security/secure_boot/secure_boot.v:313:39: Bit extraction of array[7:0] requires 3 bit index, not 17 bits.
+                                                              : ... note: In instance 'titan_x_top.u_secure_boot'
+  313 |                             exp_digest[word_addr - 17'd3] <= envm_rdata;
+      |                                       ^
+                     top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: security/secure_boot/secure_boot.v:315:38: Bit extraction of array[7:0] requires 3 bit index, not 17 bits.
+                                                              : ... note: In instance 'titan_x_top.u_secure_boot'
+  315 |                             pubkey_qx[word_addr - 17'd11] <= envm_rdata;
+      |                                      ^
+                     top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: security/secure_boot/secure_boot.v:316:47: Operator FUNCREF 'rot_qx_word' expects 3 bits on the Function Argument, but Function Argument's AND generates 17 bits.
+                                                              : ... note: In instance 'titan_x_top.u_secure_boot'
+  316 |                             if (envm_rdata != rot_qx_word(efuse_rot_qx, (word_addr - 17'd11) & 17'd7)) begin
+      |                                               ^~~~~~~~~~~
+                     top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: security/secure_boot/secure_boot.v:321:38: Bit extraction of array[7:0] requires 3 bit index, not 17 bits.
+                                                              : ... note: In instance 'titan_x_top.u_secure_boot'
+  321 |                             pubkey_qy[word_addr - 17'd19] <= envm_rdata;
+      |                                      ^
+                     top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: security/secure_boot/secure_boot.v:322:47: Operator FUNCREF 'rot_qy_word' expects 3 bits on the Function Argument, but Function Argument's AND generates 17 bits.
+                                                              : ... note: In instance 'titan_x_top.u_secure_boot'
+  322 |                             if (envm_rdata != rot_qy_word(efuse_rot_qy, (word_addr - 17'd19) & 17'd7)) begin
+      |                                               ^~~~~~~~~~~
+                     top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: security/secure_boot/secure_boot.v:327:34: Bit extraction of array[7:0] requires 3 bit index, not 17 bits.
+                                                              : ... note: In instance 'titan_x_top.u_secure_boot'
+  327 |                             sig_r[word_addr - 17'd27] <= envm_rdata;
+      |                                  ^
+                     top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: security/secure_boot/secure_boot.v:329:34: Bit extraction of array[7:0] requires 3 bit index, not 17 bits.
+                                                              : ... note: In instance 'titan_x_top.u_secure_boot'
+  329 |                             sig_s[word_addr - 17'd35] <= envm_rdata;
+      |                                  ^
+                     top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:360:52: Operator ADD expects 24 bits on the RHS, but RHS's CONST '12'h1' generates 12 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  360 |                         timeout_cnt <= timeout_cnt + 12'd1;
+      |                                                    ^
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:361:41: Operator GTE expects 24 bits on the RHS, but RHS's CONST '12'h3e8' generates 12 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  361 |                         if (timeout_cnt >= 12'd1000) begin
+      |                                         ^~
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:366:38: Operator ASSIGNDLY expects 24 bits on the Assign RHS, but Assign RHS's CONST '12'h0' generates 12 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  366 |                         timeout_cnt  <= 12'h0;
+      |                                      ^~
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:377:52: Operator SHIFTL expects 8 bits on the LHS, but LHS's VARREF 'block_word_idx' generates 4 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  377 |                     sha_paddr   <= (block_word_idx << 2);
+      |                                                    ^~
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:387:65: Operator ADD expects 32 bits on the LHS, but LHS's VARREF 'payload_idx' generates 16 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  387 |                     if (block_word_idx == 4'd15 || (payload_idx + 16'd1 == img_len)) begin
+      |                                                                 ^
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:387:65: Operator ADD expects 32 bits on the RHS, but RHS's CONST '16'h1' generates 16 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  387 |                     if (block_word_idx == 4'd15 || (payload_idx + 16'd1 == img_len)) begin
+      |                                                                 ^
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:399:63: Operator EQ expects 32 bits on the LHS, but LHS's VARREF 'payload_idx' generates 16 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  399 |                     sha_pwdata  <= (fips_mode && (payload_idx == img_len)) ?
+      |                                                               ^~
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:407:36: Operator ASSIGNDLY expects 24 bits on the Assign RHS, but Assign RHS's CONST '12'h0' generates 12 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  407 |                     timeout_cnt    <= 12'h0;
+      |                                    ^~
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:417:48: Operator ADD expects 24 bits on the RHS, but RHS's CONST '12'h1' generates 12 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  417 |                     timeout_cnt <= timeout_cnt + 12'd1;
+      |                                                ^
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:422:37: Operator ASSIGNDLY expects 24 bits on the Assign RHS, but Assign RHS's CONST '12'h0' generates 12 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  422 |                         timeout_cnt <= 12'h0;
+      |                                     ^~
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:423:41: Operator LT expects 32 bits on the LHS, but LHS's VARREF 'payload_idx' generates 16 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  423 |                         if (payload_idx < img_len) begin
+      |                                         ^
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:418:37: Operator GTE expects 24 bits on the RHS, but RHS's CONST '12'h3e8' generates 12 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  418 |                     if (timeout_cnt >= 12'd1000) begin
+      |                                     ^~
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:436:58: Operator SHIFTL expects 8 bits on the LHS, but LHS's VARREF 'sha_read_idx' generates 5 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  436 |                     sha_paddr   <= 8'h40 + (sha_read_idx << 2);
+      |                                                          ^~
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: security/secure_boot/secure_boot.v:453:34: Bit extraction of array[7:0] requires 3 bit index, not 5 bits.
+                                                              : ... note: In instance 'titan_x_top.u_secure_boot'
+  453 |                     computed_hash[sha_read_idx] <= sha_prdata;
+      |                                  ^
+                     top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:470:73: Operator SHIFTL expects 32 bits on the LHS, but LHS's VARREF 'ecdsa_load_idx' generates 6 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  470 |                         ecdsa_paddr  <= 32'h0000_0100 + (ecdsa_load_idx << 2);
+      |                                                                         ^~
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: security/secure_boot/secure_boot.v:471:54: Bit extraction of array[7:0] requires 3 bit index, not 6 bits.
+                                                              : ... note: In instance 'titan_x_top.u_secure_boot'
+  471 |                         ecdsa_pwdata <= computed_hash[ecdsa_load_idx];
+      |                                                      ^
+                     top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:473:74: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'ecdsa_load_idx' generates 6 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  473 |                         ecdsa_paddr  <= 32'h0000_0200 + ((ecdsa_load_idx - 6'd8) << 2);
+      |                                                                          ^
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:473:74: Operator SUB expects 32 bits on the RHS, but RHS's CONST '6'h8' generates 6 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  473 |                         ecdsa_paddr  <= 32'h0000_0200 + ((ecdsa_load_idx - 6'd8) << 2);
+      |                                                                          ^
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: security/secure_boot/secure_boot.v:474:41: Operator FUNCREF 'rot_qx_word' expects 3 bits on the Function Argument, but Function Argument's AND generates 6 bits.
+                                                              : ... note: In instance 'titan_x_top.u_secure_boot'
+  474 |                         ecdsa_pwdata <= rot_qx_word(efuse_rot_qx, (ecdsa_load_idx - 6'd8) & 6'd7);
+      |                                         ^~~~~~~~~~~
+                     top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:476:74: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'ecdsa_load_idx' generates 6 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  476 |                         ecdsa_paddr  <= 32'h0000_0220 + ((ecdsa_load_idx - 6'd16) << 2);
+      |                                                                          ^
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:476:74: Operator SUB expects 32 bits on the RHS, but RHS's CONST '6'h10' generates 6 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  476 |                         ecdsa_paddr  <= 32'h0000_0220 + ((ecdsa_load_idx - 6'd16) << 2);
+      |                                                                          ^
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: security/secure_boot/secure_boot.v:477:41: Operator FUNCREF 'rot_qy_word' expects 3 bits on the Function Argument, but Function Argument's AND generates 6 bits.
+                                                              : ... note: In instance 'titan_x_top.u_secure_boot'
+  477 |                         ecdsa_pwdata <= rot_qy_word(efuse_rot_qy, (ecdsa_load_idx - 6'd16) & 6'd7);
+      |                                         ^~~~~~~~~~~
+                     top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:479:74: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'ecdsa_load_idx' generates 6 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  479 |                         ecdsa_paddr  <= 32'h0000_0300 + ((ecdsa_load_idx - 6'd24) << 2);
+      |                                                                          ^
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:479:74: Operator SUB expects 32 bits on the RHS, but RHS's CONST '6'h18' generates 6 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  479 |                         ecdsa_paddr  <= 32'h0000_0300 + ((ecdsa_load_idx - 6'd24) << 2);
+      |                                                                          ^
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: security/secure_boot/secure_boot.v:480:46: Bit extraction of array[7:0] requires 3 bit index, not 6 bits.
+                                                              : ... note: In instance 'titan_x_top.u_secure_boot'
+  480 |                         ecdsa_pwdata <= sig_r[ecdsa_load_idx - 6'd24];
+      |                                              ^
+                     top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:482:74: Operator SUB expects 32 bits on the LHS, but LHS's VARREF 'ecdsa_load_idx' generates 6 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  482 |                         ecdsa_paddr  <= 32'h0000_0400 + ((ecdsa_load_idx - 6'd32) << 2);
+      |                                                                          ^
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: security/secure_boot/secure_boot.v:482:74: Operator SUB expects 32 bits on the RHS, but RHS's CONST '6'h20' generates 6 bits.
+                                                               : ... note: In instance 'titan_x_top.u_secure_boot'
+  482 |                         ecdsa_paddr  <= 32'h0000_0400 + ((ecdsa_load_idx - 6'd32) << 2);
+      |                                                                          ^
+                      top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: security/secure_boot/secure_boot.v:483:46: Bit extraction of array[7:0] requires 3 bit index, not 6 bits.
+                                                              : ... note: In instance 'titan_x_top.u_secure_boot'
+  483 |                         ecdsa_pwdata <= sig_s[ecdsa_load_idx - 6'd32];
+      |                                              ^
+                     top/titan_x_top/titan_x_top.v:1025:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: interconnect/mmu_arbiter/mmu_arbiter.v:61:53: Operator ADD expects 32 bits on the LHS, but LHS's VARREF 'grant_idx' generates 3 bits.
+                                                                  : ... note: In instance 'titan_x_top.u_mmu_arbiter'
+   61 |                             grant_idx <= (grant_idx + i) % N;
+      |                                                     ^
+                      top/titan_x_top/titan_x_top.v:988:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: interconnect/mmu_arbiter/mmu_arbiter.v:61:39: Operator ASSIGNDLY expects 3 bits on the Assign RHS, but Assign RHS's MODDIV generates 32 bits.
+                                                                 : ... note: In instance 'titan_x_top.u_mmu_arbiter'
+   61 |                             grant_idx <= (grant_idx + i) % N;
+      |                                       ^~
+                     top/titan_x_top/titan_x_top.v:988:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: interconnect/mmu_arbiter/mmu_arbiter.v:60:50: Operator ADD expects 32 bits on the LHS, but LHS's VARREF 'grant_idx' generates 3 bits.
+                                                                  : ... note: In instance 'titan_x_top.u_mmu_arbiter'
+   60 |                         if (s_arvalid[(grant_idx + i) % N] && !req_active) begin
+      |                                                  ^
+                      top/titan_x_top/titan_x_top.v:988:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHEXPAND: backend/rv_debug/rv_debug.v:302:39: Operator ASSIGNDLY expects 32 bits on the Assign RHS, but Assign RHS's REPLICATE generates 26 bits.
+                                                        : ... note: In instance 'titan_x_top.u_debug'
+  302 |                         dmi_resp_data <= {14'h0,
+      |                                       ^~
+                      top/titan_x_top/titan_x_top.v:607:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: backend/rv_debug/rv_debug.v:321:38: Operator ASSIGNDLY expects 5 bits on the Assign RHS, but Assign RHS's SEL generates 6 bits.
+                                                       : ... note: In instance 'titan_x_top.u_debug'
+  321 |                             reg_sel  <= dmi_req_data[15:10];
+      |                                      ^~
+                     top/titan_x_top/titan_x_top.v:607:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: top/axi_rom/axi_rom.v:110:31: Operator ASSIGNW expects 17 bits on the Assign RHS, but Assign RHS's ADD generates 38 bits.
+                                                 : ... note: In instance 'titan_x_top.u_boot_rom'
+  110 |     wire [16:0] cpu_base_word = (s_araddr[AW-1:2] & (DEPTH*2-1)) + PAYLOAD_OFFSET;
+      |                               ^
+                     top/titan_x_top/titan_x_top.v:414:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: backend/plic/plic.v:84:33: Bit extraction of array[185:0] requires 8 bit index, not 10 bits.
+                                              : ... note: In instance 'titan_x_top.u_plic'
+   84 |                     priority_reg[paddr[11:2]] <= pwdata[2:0];
+      |                                 ^
+                     top/titan_x_top/titan_x_top.v:171:1: ... note: In file included from 'titan_x_top.v'
+%Warning-WIDTHTRUNC: backend/plic/plic.v:87:27: Bit extraction of array[9:0] requires 4 bit index, not 5 bits.
+                                              : ... note: In instance 'titan_x_top.u_plic'
+   87 |                     enable[paddr[12:8]][paddr[6:2]*32 +: 32] <= pwdata;
+      |                           ^
+                     top/titan_x_top/titan_x_top.v:171:1: ... note: In file included from 'titan_x_top.v'
+%Error: Exiting due to 94 warning(s)

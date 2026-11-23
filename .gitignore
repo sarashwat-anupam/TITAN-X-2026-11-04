@@ -1,10 +1,15 @@
 # Simulation artifacts
 *.vvp
 *.vcd
+*.fst
 *.log
 !artifacts/qualification/logs/*.log
+!clean_verify/reports/*.log
 a.out
 sim_build/
+obj_dir/
+tb_gem_ethernet
+tb_pcie_top
 
 # Python cache
 __pycache__/

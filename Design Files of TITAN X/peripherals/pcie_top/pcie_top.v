@@ -14,17 +14,17 @@ module pcie_top #(
     input  wire pipe_clk,       // 250MHz PIPE Clock
 
     // AXI4 Master (DMA/Bus Master traffic to system)
-    output wire        m_awvalid,  input  wire        m_awready,
-    output wire [AW-1:0] m_awaddr, output wire [IDW-1:0] m_awid,
+    output reg         m_awvalid,  input  wire        m_awready,
+    output reg  [AW-1:0] m_awaddr, output wire [IDW-1:0] m_awid,
     output wire [7:0]  m_awlen,    output wire [2:0]  m_awsize,
-    output wire        m_wvalid,   input  wire        m_wready,
-    output wire [DW-1:0] m_wdata,  output wire [DW/8-1:0] m_wstrb,
-    output wire        m_wlast,
+    output reg         m_wvalid,   input  wire        m_wready,
+    output reg  [DW-1:0] m_wdata,  output wire [DW/8-1:0] m_wstrb,
+    output reg         m_wlast,
     input  wire        m_bvalid,   output wire        m_bready,
     input  wire [1:0]  m_bresp,    input  wire [IDW-1:0] m_bid,
     
-    output wire        m_arvalid,  input  wire        m_arready,
-    output wire [AW-1:0] m_araddr, output wire [IDW-1:0] m_arid,
+    output reg         m_arvalid,  input  wire        m_arready,
+    output reg  [AW-1:0] m_araddr, output wire [IDW-1:0] m_arid,
     output wire [7:0]  m_arlen,    output wire [2:0]  m_arsize,
     input  wire        m_rvalid,   output wire        m_rready,
     input  wire [DW-1:0] m_rdata,  input  wire [1:0]  m_rresp,
@@ -65,42 +65,19 @@ module pcie_top #(
     input  wire [LANES-1:0]      pipe_phy_status
 );
 
-    // -------------------------------------------------------
-    // Transaction Layer (AXI ↔ TLP)
-    // -------------------------------------------------------
-    wire [127:0] tlp_tx_data;
-    wire         tlp_tx_valid;
-    wire         tlp_tx_ready;
-    wire         tlp_tx_last;
+    // Static AXI Master Attributes
+    assign m_awid   = {IDW{1'b0}};
+    assign m_awlen  = 8'h0;
+    assign m_awsize = 3'h3; // 64-bit
+    assign m_wstrb  = {DW/8{1'b1}};
+    assign m_bready = 1'b1;
 
-    wire [127:0] tlp_rx_data;
-    wire         tlp_rx_valid;
-    wire         tlp_rx_ready;
-    wire         tlp_rx_last;
+    assign m_arid   = {IDW{1'b0}};
+    assign m_arlen  = 8'h0;
+    assign m_arsize = 3'h3; // 64-bit
+    assign m_rready = 1'b1;
 
-    // Behavioral stub for the AXI to TLP translation (Data Link Layer / Transaction Layer)
-    // Proper PCIe requires full AXI Bridge logic, Configuration Space Registers, and DMA engines.
-    
-    // Tie off master for synthesis stability if not fully implemented in iteration 3
-    assign m_awvalid = 1'b0;
-    assign m_awaddr  = {AW{1'b0}};
-    assign m_awid    = {IDW{1'b0}};
-    assign m_awlen   = 8'h0;
-    assign m_awsize  = 3'h3;
-    assign m_wvalid  = 1'b0;
-    assign m_wdata   = {DW{1'b0}};
-    assign m_wstrb   = {DW/8{1'b0}};
-    assign m_wlast   = 1'b0;
-    assign m_bready  = 1'b1;
-    
-    assign m_arvalid = 1'b0;
-    assign m_araddr  = {AW{1'b0}};
-    assign m_arid    = {IDW{1'b0}};
-    assign m_arlen   = 8'h0;
-    assign m_arsize  = 3'h3;
-    assign m_rready  = 1'b1;
-
-    // Tie off slave responses
+    // Tie off slave responses (PCIe target slave)
     assign s_awready = 1'b0;
     assign s_wready  = 1'b0;
     assign s_bvalid  = 1'b0;
@@ -117,7 +94,7 @@ module pcie_top #(
     // -------------------------------------------------------
     // LTSSM & Link Training
     // -------------------------------------------------------
-    wire [1:0]  tx_rate = 2'b01; // Force Gen2
+    wire [1:0]  tx_rate = 2'b01; // Force Gen2 (5.0 GT/s)
     wire [(LANES*2)-1:0] power_down = {(LANES*2){1'b0}}; // P0 state
     wire [LANES-1:0] tx_elecidle;
     wire [LANES-1:0] tx_compliance;
@@ -126,11 +103,228 @@ module pcie_top #(
     genvar i;
     generate
         for (i = 0; i < LANES; i = i + 1) begin : gen_ltssm_ties
-            assign tx_elecidle[i] = 1'b0; // transmitting
+            assign tx_elecidle[i]   = 1'b0; // transmitting
             assign tx_compliance[i] = 1'b0;
-            assign rx_polarity[i] = 1'b0;
+            assign rx_polarity[i]   = 1'b0;
         end
     endgenerate
+
+    // LTSSM states
+    localparam LTSSM_DETECT  = 2'd0;
+    localparam LTSSM_POLLING = 2'd1;
+    localparam LTSSM_CONFIG  = 2'd2;
+    localparam LTSSM_L0      = 2'd3;
+
+    reg [1:0]  ltssm_state;
+    reg [7:0]  ts_match_cnt;
+
+    // Internal PIPE stream
+    reg [(LANES*16)-1:0] int_tx_data;
+    reg [(LANES*2)-1:0]  int_tx_datak;
+    wire [(LANES*16)-1:0] int_rx_data;
+    wire [(LANES*2)-1:0]  int_rx_datak;
+    wire [LANES-1:0]      int_rx_valid;
+
+    // Ordered Set definitions
+    localparam OS_TS1  = 64'h4A4A_4A4A_4A4A_4A4A;
+    localparam OS_TS2  = 64'h4545_4545_4545_4545;
+    localparam OS_IDLE = 64'h0000_0000_0000_0000;
+
+    // -------------------------------------------------------
+    // TLP Processing Engine & DMA Bridge
+    // -------------------------------------------------------
+    localparam TLP_IDLE      = 3'd0;
+    localparam TLP_MWR_ADDR  = 3'd1;
+    localparam TLP_MWR_DATA  = 3'd2;
+    localparam TLP_MWR_AXI   = 3'd3;
+    localparam TLP_MRD_ADDR  = 3'd4;
+    localparam TLP_MRD_AXI   = 3'd5;
+    localparam TLP_CPLD_TX   = 3'd6;
+
+    reg [2:0]  tlp_state;
+    reg [63:0] tlp_req_hdr0;
+    reg [31:0] tlp_target_addr;
+    reg [63:0] tlp_write_data;
+    reg [63:0] tlp_read_data;
+    reg [1:0]  cpld_beat;
+
+    always @(posedge pcie_clk or negedge pcie_rst_n) begin
+        if (!pcie_rst_n) begin
+            ltssm_state     <= LTSSM_DETECT;
+            ts_match_cnt    <= 8'd0;
+            int_tx_data     <= 64'h0;
+            int_tx_datak    <= 8'h0;
+            tlp_state       <= TLP_IDLE;
+            m_awvalid       <= 1'b0;
+            m_awaddr        <= {AW{1'b0}};
+            m_wvalid        <= 1'b0;
+            m_wdata         <= {DW{1'b0}};
+            m_wlast         <= 1'b0;
+            m_arvalid       <= 1'b0;
+            m_araddr        <= {AW{1'b0}};
+            tlp_req_hdr0    <= 64'h0;
+            tlp_target_addr <= 32'h0;
+            tlp_write_data  <= 64'h0;
+            tlp_read_data   <= 64'h0;
+            cpld_beat       <= 2'd0;
+        end else begin
+            // -------------------------------------------------------
+            // 1. LTSSM Link Training FSM
+            // -------------------------------------------------------
+            case (ltssm_state)
+                LTSSM_DETECT: begin
+                    int_tx_data  <= OS_IDLE;
+                    int_tx_datak <= 8'h00;
+                    if (int_rx_valid != 4'h0 || int_rx_data[31:0] == 32'h4A4A_4A4A) begin
+                        ltssm_state  <= LTSSM_POLLING;
+                        ts_match_cnt <= 8'd0;
+                    end
+                end
+
+                LTSSM_POLLING: begin
+                    // Transmit TS1 ordered sets
+                    int_tx_data  <= OS_TS1;
+                    int_tx_datak <= 8'hFF;
+                    if (int_rx_data[31:0] == 32'h4A4A_4A4A) begin
+                        ts_match_cnt <= ts_match_cnt + 1'b1;
+                    end
+                    if (ts_match_cnt > 8'd4 && int_rx_data[31:0] == 32'h4545_4545) begin
+                        ltssm_state  <= LTSSM_CONFIG;
+                        ts_match_cnt <= 8'd0;
+                    end
+                end
+
+                LTSSM_CONFIG: begin
+                    // Transmit TS2 ordered sets
+                    int_tx_data  <= OS_TS2;
+                    int_tx_datak <= 8'hFF;
+                    if (int_rx_data[31:0] == 32'h4545_4545) begin
+                        ts_match_cnt <= ts_match_cnt + 1'b1;
+                    end
+                    if (ts_match_cnt > 8'd4 && (int_rx_data[31:0] == 32'h0 || int_rx_datak == 8'h0)) begin
+                        ltssm_state <= LTSSM_L0;
+                    end
+                end
+
+                LTSSM_L0: begin
+                    // Link Up in steady state
+                    if (tlp_state == TLP_CPLD_TX) begin
+                        // Driving CplD
+                    end else begin
+                        int_tx_data  <= OS_IDLE;
+                        int_tx_datak <= 8'h00;
+                    end
+                end
+
+                default: ltssm_state <= LTSSM_DETECT;
+            endcase
+
+            // -------------------------------------------------------
+            // 2. TLP Packet Decoder & AXI DMA Master 11 FSM
+            // -------------------------------------------------------
+            if (ltssm_state == LTSSM_L0) begin
+                case (tlp_state)
+                    TLP_IDLE: begin
+                        // Check if a TLP header arrived (Fmt/Type in DW0 [31:24] or [7:0])
+                        if (int_rx_valid != 4'h0 && int_rx_datak == 8'h0 && int_rx_data != 64'h0) begin
+                            if (int_rx_data[31:24] == 8'h40 || int_rx_data[31:24] == 8'h60 ||
+                                int_rx_data[7:0]   == 8'h40 || int_rx_data[7:0]   == 8'h60) begin
+                                // Memory Write 32/64-bit (MWr)
+                                tlp_req_hdr0 <= int_rx_data;
+                                tlp_state    <= TLP_MWR_ADDR;
+                            end else if (int_rx_data[31:24] == 8'h20 || int_rx_data[7:0] == 8'h20 ||
+                                         ((int_rx_data[31:24] == 8'h00 || int_rx_data[7:0] == 8'h00) && int_rx_data[9:0] != 10'h0)) begin
+                                // Memory Read 32/64-bit (MRd)
+                                tlp_req_hdr0 <= int_rx_data;
+                                tlp_state    <= TLP_MRD_ADDR;
+                            end
+                        end
+                    end
+
+                    TLP_MWR_ADDR: begin
+                        if (int_rx_valid != 4'h0) begin
+                            tlp_target_addr <= (tlp_req_hdr0[29] || tlp_req_hdr0[5]) ? int_rx_data[63:32] : int_rx_data[31:0];
+                            tlp_state       <= TLP_MWR_DATA;
+                        end
+                    end
+
+                    TLP_MWR_DATA: begin
+                        if (int_rx_valid != 4'h0) begin
+                            tlp_write_data <= int_rx_data;
+                            // Launch AXI write into DDR4
+                            m_awvalid      <= 1'b1;
+                            m_awaddr       <= {{(AW-32){1'b0}}, tlp_target_addr};
+                            m_wvalid       <= 1'b1;
+                            m_wdata        <= int_rx_data;
+                            m_wlast        <= 1'b1;
+                            tlp_state      <= TLP_MWR_AXI;
+                        end
+                    end
+
+                    TLP_MWR_AXI: begin
+                        if (m_awready) m_awvalid <= 1'b0;
+                        if (m_wready) begin
+                            m_wvalid <= 1'b0;
+                            m_wlast  <= 1'b0;
+                        end
+                        if (m_bvalid) begin
+                            tlp_state <= TLP_IDLE;
+                        end
+                    end
+
+                    TLP_MRD_ADDR: begin
+                        if (int_rx_valid != 4'h0) begin
+                            tlp_target_addr <= (tlp_req_hdr0[29] || tlp_req_hdr0[5]) ? int_rx_data[63:32] : int_rx_data[31:0];
+                            // Launch AXI read from DDR4
+                            m_arvalid       <= 1'b1;
+                            m_araddr        <= {{(AW-32){1'b0}}, ((tlp_req_hdr0[29] || tlp_req_hdr0[5]) ? int_rx_data[63:32] : int_rx_data[31:0])};
+                            tlp_state       <= TLP_MRD_AXI;
+                        end
+                    end
+
+                    TLP_MRD_AXI: begin
+                        if (m_arready) m_arvalid <= 1'b0;
+                        if (m_rvalid) begin
+                            tlp_read_data <= m_rdata;
+                            cpld_beat     <= 2'd0;
+                            tlp_state     <= TLP_CPLD_TX;
+                        end
+                    end
+
+                    TLP_CPLD_TX: begin
+                        // Transmit Completion with Data (CplD)
+                        case (cpld_beat)
+                            2'd0: begin
+                                // Header: DW0 (0x4A00_0002 CplD 2DW payload) & DW1 (Completer ID, status, byte count 8)
+                                int_tx_data  <= {32'h0000_0008, 32'h4A00_0002};
+                                int_tx_datak <= 8'h00;
+                                cpld_beat    <= 2'd1;
+                            end
+                            2'd1: begin
+                                // Header: DW2 (Requester ID from tlp_req_hdr0[63:32], lower addr 0) & Payload Lower DW3
+                                int_tx_data  <= {tlp_read_data[31:0], tlp_req_hdr0[63:48], 16'h0000};
+                                int_tx_datak <= 8'h00;
+                                cpld_beat    <= 2'd2;
+                            end
+                            2'd2: begin
+                                // Payload Upper DW4
+                                int_tx_data  <= {32'h0000_0000, tlp_read_data[63:32]};
+                                int_tx_datak <= 8'h00;
+                                cpld_beat    <= 2'd3;
+                            end
+                            2'd3: begin
+                                int_tx_data  <= OS_IDLE;
+                                int_tx_datak <= 8'h00;
+                                tlp_state    <= TLP_IDLE;
+                            end
+                        endcase
+                    end
+
+                    default: tlp_state <= TLP_IDLE;
+                endcase
+            end
+        end
+    end
 
     // -------------------------------------------------------
     // PIPE Interface Instance
@@ -140,11 +334,11 @@ module pcie_top #(
     ) u_pipe_if (
         .pclk(pipe_clk),
         .reset_n(pcie_rst_n),
-        .tx_data(64'h0),    // Tied off for now
-        .tx_datak(8'h0),
-        .rx_data(),
-        .rx_datak(),
-        .rx_valid(),
+        .tx_data(int_tx_data),
+        .tx_datak(int_tx_datak),
+        .rx_data(int_rx_data),
+        .rx_datak(int_rx_datak),
+        .rx_valid(int_rx_valid),
         .rx_elecidle(),
         .rx_status(),
         .tx_rate(tx_rate),

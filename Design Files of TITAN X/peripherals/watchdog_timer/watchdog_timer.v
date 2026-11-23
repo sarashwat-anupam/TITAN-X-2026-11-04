@@ -70,14 +70,20 @@ module watchdog_timer (
             if (psel && penable && pwrite) begin
                 case (paddr[3:2])
                     2'd0: unlock <= (pwdata == UNLOCK_KEY);
-                    2'd1: if (unlock) load_val <= pwdata;
+                    2'd1: if (unlock) begin
+                        load_val <= pwdata;
+                        if (!wdt_en) count <= pwdata;
+                    end
                     2'd2: begin
                         // Kick/service: write 0xE5 then 0xE5
                         if (pwdata == 32'h0000_00E5) count <= load_val;
                         int_stat <= 1'b0;
                         wdt_reset_n <= 1'b1;
                     end
-                    2'd3: if (unlock) {int_en, wdt_en} <= pwdata[1:0];
+                    2'd3: if (unlock) begin
+                        if (pwdata[0] && !wdt_en) count <= load_val;
+                        {int_en, wdt_en} <= pwdata[1:0];
+                    end
                     default: ;
                 endcase
             end

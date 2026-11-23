@@ -99,8 +99,8 @@ module rv_mmu (
         .fill_perm     (ptw_fill_perm),
         .fill_level    (ptw_fill_level),
         // SFENCE
-        .sfence_vma    (sfence_vma),
-        .sfence_asid   (sfence_asid_en),
+        .sfence_vma    (sfence_vma && !sfence_asid_en && !sfence_va_en),
+        .sfence_asid   (sfence_asid_en && !sfence_va_en),
         .sfence_asid_val(sfence_asid_val[15:0]),
         .sfence_va     (sfence_va_en),
         .sfence_va_val  (sfence_va_val[38:0]),

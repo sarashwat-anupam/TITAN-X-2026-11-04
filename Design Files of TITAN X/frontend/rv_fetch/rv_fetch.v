@@ -30,6 +30,11 @@ module rv_fetch #(
     input  wire        imem_rvalid,
     output wire        imem_rready,
     input  wire [1:0]  imem_rresp,
+    // MMU Translation fault
+    input  wire        mmu_page_fault,
+    input  wire [63:0] mmu_fault_va,
+    // PMP Access fault
+    input  wire        pmp_fault,
     // To decode stage
     output reg  [63:0] pc_out,
     output reg  [31:0] instr_out,
@@ -111,18 +116,39 @@ module rv_fetch #(
                     end
                 end
                 F_WAIT: begin
-                    // Track AR completion for the outstanding request
-                    if (ar_fire) begin
-                        imem_arvalid <= 1'b0;
-                        pending_r    <= 1'b1;
-                    end
-                    if (redirect) begin
-                        valid_out       <= 1'b0;
-                        fault_out       <= 1'b0;
-                        fault_cause_out <= 64'h0;
-                        fault_tval_out  <= 64'h0;
+                    if (mmu_page_fault) begin
+                        valid_out       <= 1'b1;
+                        fault_out       <= 1'b1;
+                        fault_cause_out <= 64'd12; // Instruction page fault
+                        fault_tval_out  <= mmu_fault_va;
+                        instr_out       <= 32'h0000_0013;
+                        imem_arvalid    <= 1'b0;
+                        pending_r       <= 1'b0;
                         half_buf_valid  <= 1'b0;
-                        pc              <= branch_target;
+                        fstate          <= F_REQ;
+                    end else if (pmp_fault) begin
+                        valid_out       <= 1'b1;
+                        fault_out       <= 1'b1;
+                        fault_cause_out <= 64'd1;  // Instruction access fault
+                        fault_tval_out  <= pc;
+                        instr_out       <= 32'h0000_0013;
+                        imem_arvalid    <= 1'b0;
+                        pending_r       <= 1'b0;
+                        half_buf_valid  <= 1'b0;
+                        fstate          <= F_REQ;
+                    end else begin
+                        // Track AR completion for the outstanding request
+                        if (ar_fire) begin
+                            imem_arvalid <= 1'b0;
+                            pending_r    <= 1'b1;
+                        end
+                        if (redirect) begin
+                            valid_out       <= 1'b0;
+                            fault_out       <= 1'b0;
+                            fault_cause_out <= 64'h0;
+                            fault_tval_out  <= 64'h0;
+                            half_buf_valid  <= 1'b0;
+                            pc              <= branch_target;
                         if (ENABLE_DRAIN && ((imem_arvalid && !ar_fire) ||
                             ((pending_r || ar_fire) && !r_fire)))
                             fstate <= F_FLUSH;
@@ -213,6 +239,7 @@ module rv_fetch #(
                             pending_r       <= 1'b0;
                             fstate          <= F_REQ;
                         end
+                    end
                     end
                 end
                 F_FLUSH: begin

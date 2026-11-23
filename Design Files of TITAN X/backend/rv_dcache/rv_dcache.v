@@ -110,6 +110,8 @@ module rv_dcache #(
     localparam D_REFILL_RQ = 4'd3;  // send AXI read request
     localparam D_REFILL    = 4'd4;  // receive refill data
     localparam D_FLUSH_SCAN= 4'd5;  // flush: walk sets/ways, evict dirty
+    localparam D_WT_AW     = 4'd6;  // write-through address/data to L2
+    localparam D_WT_RESP   = 4'd7;  // wait for write-through response
 
     reg [3:0]         state;        // 4 bits: headroom, all compares explicit
     reg [2:0]         fill_way;
@@ -118,6 +120,7 @@ module rv_dcache #(
     reg [LINE_BITS-1:0] fill_buf;
     reg [2:0]         fill_beat;
     reg [2:0]         evict_beat;
+    reg               refill_invalidated; // D-015: Invalidate snoop hit during in-flight refill
     reg [63:0]        cyc;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) cyc <= 0;
@@ -312,6 +315,7 @@ module rv_dcache #(
             fsw        <= 3'h0;
             fill_beat  <= 3'h0;
             evict_beat <= 3'h0;
+            refill_invalidated <= 1'b0;
         end else begin
             cpu_valid <= 1'b0;
             snoop_ack <= 1'b0;
@@ -331,22 +335,40 @@ module rv_dcache #(
                         snoop_data_valid <= 1'b1;
                     end
                     if (snoop_type == 2'b01 || snoop_type == 2'b10 || snoop_type == 2'b11) begin
-                        // Invalidate: transition to Invalid (I)
-                        tag_sram[snoop_index][snoop_hit_way][TAG_V] <= 1'b0;
-                        tag_sram[snoop_index][snoop_hit_way][TAG_D] <= 1'b0;
+                        // Invalidate: transition to Invalid (I) using flat RMW
+                        begin : inv_snoop
+                            reg [TAG_ENTRY_W-1:0] ts;
+                            ts = tag_sram[snoop_index][snoop_hit_way];
+                            ts[TAG_V] = 1'b0;
+                            ts[TAG_D] = 1'b0;
+                            tag_sram[snoop_index][snoop_hit_way] <= ts;
+                        end
                     end else if (snoop_type == 2'b00) begin
-                        // Downgrade to Shared (S): clear dirty bit
-                        tag_sram[snoop_index][snoop_hit_way][TAG_D] <= 1'b0;
+                        // Downgrade to Shared (S): clear dirty bit using flat RMW
+                        begin : dng_snoop
+                            reg [TAG_ENTRY_W-1:0] ts;
+                            ts = tag_sram[snoop_index][snoop_hit_way];
+                            ts[TAG_D] = 1'b0;
+                            tag_sram[snoop_index][snoop_hit_way] <= ts;
+                        end
                     end
+                end
+
+                // D-015: Invalidate snoop targeting line currently undergoing refill/eviction
+                if ((snoop_type == 2'b01 || snoop_type == 2'b10 || snoop_type == 2'b11) &&
+                    (snoop_index == fill_idx) && (snoop_tag == fill_tag) &&
+                    (state == D_REFILL_RQ || state == D_REFILL ||
+                     ((state == D_EVICT_WR || state == D_EVICT_RSP) && !flush_run))) begin
+                    refill_invalidated <= 1'b1;
                 end
             end
 
             case (state)
                 D_IDLE: begin
-                    if (cpu_req && cache_hit) begin
+                    if (cpu_req && !cpu_valid && cache_hit) begin
                         if (!cpu_wr) begin
                             // Load hit
-                            cpu_rdata <= cpu_rdata_comb;
+                            cpu_rdata <= word_data;
                             cpu_valid <= 1'b1;
                         end else begin
                             // Store hit — byte-merged write into the line.
@@ -365,13 +387,22 @@ module rv_dcache #(
                                          cpu_wdata, st_merge_w);
 `endif
                             end
-                            begin : mark_dirty
+                            begin : mark_clean
                                 reg [TAG_ENTRY_W-1:0] td;
                                 td = tag_sram[index][hit_way_enc];
-                                td[TAG_D] = 1'b1;
+                                td[TAG_D] = 1'b0;
                                 tag_sram[index][hit_way_enc] <= td;
                             end
-                            cpu_valid <= 1'b1;
+                            m_awaddr  <= cpu_addr;
+                            m_awlen   <= 8'd0;
+                            m_awsize  <= 3'd3;
+                            m_awburst <= 2'b01;
+                            m_awvalid <= 1'b1;
+                            m_wdata   <= cpu_wdata;
+                            m_wstrb   <= cpu_wstrb;
+                            m_wlast   <= 1'b1;
+                            m_wvalid  <= 1'b1;
+                            state     <= D_WT_AW;
                         end
                         // Update PLRU to MRU on hit
                         case (hit_way_enc)
@@ -384,12 +415,13 @@ module rv_dcache #(
                             3'd6: plru_state[index] <= {1'b0, plru[5:3], plru[2:1], 1'b1};
                             3'd7: plru_state[index] <= {1'b1, plru[5:3], plru[2:1], 1'b1};
                         endcase
-                    end else if (cpu_req && !cache_hit) begin
+                    end else if (cpu_req && !cpu_valid && !cache_hit) begin
                         // Miss — schedule victim + fill
                         fill_idx  <= index;
                         fill_tag  <= tag;
                         fill_way  <= plru_victim;
                         fill_beat <= 3'h0;
+                        refill_invalidated <= 1'b0;
                         if (victim_dirty) begin
                             m_awaddr  <= {victim_tag, index, {OFFSET_W{1'b0}}};
                             m_awlen   <= 8'd7;
@@ -520,12 +552,40 @@ module rv_dcache #(
                             // beat 7 and belongs at the TOP of the line.
                             data_sram[fill_idx][fill_way] <=
                                 {m_rdata, fill_buf[LINE_BITS-65:0]};
-                            tag_sram[fill_idx][fill_way] <=
-                                {1'b1, 1'b0, 7'h0, fill_tag}; // valid, clean
+                            // D-015: If an Invalidate snoop hit during refill or in this cycle, install as Invalid
+                            if (refill_invalidated ||
+                                (snoop_valid && (snoop_index == fill_idx) && (snoop_tag == fill_tag) && (snoop_type != 2'b00))) begin
+                                tag_sram[fill_idx][fill_way] <= {1'b0, 1'b0, 7'h0, fill_tag};
+                            end else begin
+                                tag_sram[fill_idx][fill_way] <= {1'b1, 1'b0, 7'h0, fill_tag}; // valid, clean
+                            end
                             plru_mru(fill_idx, fill_way);   // DC-005: installs
                                                             // must refresh the tree
+                            refill_invalidated <= 1'b0;
                             state <= D_IDLE;
                         end
+                    end
+                end
+
+                D_WT_AW: begin
+                    if (m_awvalid && m_awready) begin
+                        m_awvalid <= 1'b0;
+                    end
+                    if (m_wvalid && m_wready) begin
+                        m_wvalid <= 1'b0;
+                    end
+                    if ((!m_awvalid || (m_awvalid && m_awready)) &&
+                        (!m_wvalid  || (m_wvalid && m_wready))) begin
+                        m_bready <= 1'b1;
+                        state    <= D_WT_RESP;
+                    end
+                end
+
+                D_WT_RESP: begin
+                    if (m_bvalid && m_bready) begin
+                        m_bready  <= 1'b0;
+                        cpu_valid <= 1'b1;
+                        state     <= D_IDLE;
                     end
                 end
 

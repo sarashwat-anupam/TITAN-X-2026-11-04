@@ -92,7 +92,7 @@ module drbg (
                 end
             end
             
-            if (stat_reg[1] && (psel && !penable && !pwrite && paddr[7:0] == 8'h04)) begin
+            if (stat_reg[1] && (psel && penable && pready && !pwrite && paddr[7:0] == 8'h04)) begin
                 // Clear done on read of status
                 stat_reg[1] <= 1'b0;
             end

@@ -83,22 +83,27 @@ module axi4_to_ahb #(
                     s_arready <= 1'b1;
                     s_wready  <= 1'b0;
                     htrans    <= HTRANS_IDLE;
-                    if (s_awvalid) begin
+                    if (s_awvalid && s_wvalid) begin
                         haddr     <= s_awaddr[31:0];
+                        hwdata    <= wdata_sel;
                         hwrite    <= 1'b1;
                         htrans    <= HTRANS_NONSEQ;
                         hsize     <= 3'b010;
                         saved_id  <= s_awid;
                         s_awready <= 1'b0;
+                        s_wready  <= 1'b1;
                         is_wr     <= 1'b1;
-                        if (s_wvalid) begin
-                            hwdata   <= wdata_sel;
-                            s_wready <= 1'b1;
-                            bstate   <= BS_DATA;
-                        end else begin
-                            s_wready <= 1'b1;
-                            bstate   <= BS_ADDR;
-                        end
+                        bstate    <= BS_DATA;
+                    end else if (s_awvalid) begin
+                        haddr     <= s_awaddr[31:0];
+                        hwrite    <= 1'b1;
+                        htrans    <= HTRANS_IDLE;
+                        hsize     <= 3'b010;
+                        saved_id  <= s_awid;
+                        s_awready <= 1'b0;
+                        s_wready  <= 1'b1;
+                        is_wr     <= 1'b1;
+                        bstate    <= BS_ADDR;
                     end else if (s_arvalid) begin
                         haddr     <= s_araddr[31:0];
                         hwrite    <= 1'b0;
@@ -114,8 +119,11 @@ module axi4_to_ahb #(
                 BS_ADDR: begin
                     if (s_wvalid) begin
                         hwdata   <= wdata_sel_hold;
+                        htrans   <= HTRANS_NONSEQ;
                         s_wready <= 1'b1;
                         bstate   <= BS_DATA;
+                    end else begin
+                        htrans   <= HTRANS_IDLE;
                     end
                 end
 

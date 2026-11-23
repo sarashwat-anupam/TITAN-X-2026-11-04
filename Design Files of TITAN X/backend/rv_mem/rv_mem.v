@@ -24,6 +24,12 @@ module rv_mem (
     input  wire [39:0] phys_addr,
     input  wire        mmu_page_fault,
     input  wire [63:0] mmu_fault_va,
+    input  wire        mmu_trans_busy,
+    input  wire        pmp_fault,
+    // Snoop invalidation interface from L2 coherence subsystem
+    input  wire        snoop_valid,
+    input  wire [39:0] snoop_addr,
+    input  wire [1:0]  snoop_type,
     // Data memory AXI4-Lite master
     output reg         dmem_awvalid,
     input  wire        dmem_awready,
@@ -73,16 +79,24 @@ module rv_mem (
     reg        lr_valid;
     reg [39:0] lr_addr;
     reg        is_sc_q;
+    reg        sc_failed;
     reg [2:0]  funct3_q;
     reg [4:0]  amo_funct5_q;
     reg [63:0] rs2_data_q;
-    wire [39:0] eff_mem_addr = (phys_addr != 40'h0 && phys_addr[0] !== 1'bx) ? phys_addr : alu_result[39:0];
+    wire [39:0] eff_mem_addr = (phys_addr[0] !== 1'bx) ? phys_addr : alu_result[39:0];
 
     wire [1:0]  clean_bresp = dmem_bresp;
     wire [1:0]  clean_rresp = dmem_rresp;
     wire [63:0] clean_pc_in = pc_in;
 
-    assign mem_stall  = mem_active && (mstate != MS_DONE);
+    wire snoop_kills_lr = snoop_valid && (snoop_type != 2'b00) && (snoop_addr[39:6] == lr_addr[39:6]);
+    wire snoop_kills_sc = is_sc_q && snoop_valid && (snoop_type != 2'b00) && (snoop_addr[39:6] == store_addr_q[39:6]);
+    wire sc_fail = is_amo && (amo_funct5 == `AMO_SC) && !(lr_valid && !snoop_kills_lr && (lr_addr[39:3] == eff_mem_addr[39:3]));
+    wire mem_req_active = valid_in && (mem_read || mem_write || is_amo) &&
+                          !(mmu_page_fault || pmp_fault) && !sc_fail;
+
+    assign mem_stall  = (mem_active && (mstate != MS_DONE)) ||
+                        (valid_in && (mem_read || mem_write || is_amo) && mmu_trans_busy);
     assign fwd_mem_data  = result;
     assign fwd_mem_rd    = rd_out;
     // Suppress forwarding while a memory transaction is in flight: 'result'
@@ -181,6 +195,7 @@ module rv_mem (
             lr_valid        <= 1'b0;
             lr_addr         <= 40'h0;
             is_sc_q         <= 1'b0;
+            sc_failed       <= 1'b0;
             funct3_q        <= 3'h0;
             amo_funct5_q    <= 5'h0;
             rs2_data_q      <= 64'h0;
@@ -204,6 +219,7 @@ module rv_mem (
             pc_q            <= 64'h0;
             store_addr_q    <= 40'h0;
             is_sc_q         <= 1'b0;
+            sc_failed       <= 1'b0;
             funct3_q        <= 3'h0;
             amo_funct5_q    <= 5'h0;
             rs2_data_q      <= 64'h0;
@@ -212,17 +228,31 @@ module rv_mem (
             mem_fault_cause <= 64'h0;
             mem_fault_tval  <= 64'h0;
         end else begin
+            // Defect D-017 & D-018: Snoop invalidation of LR reservation and in-flight SC.
+            // Any write or invalidation snoop matching the 64-byte reservation line clears lr_valid.
+            // If an SC write is in-flight when snoop invalidation arrives, SC must fail.
+            if (snoop_valid && (snoop_type != 2'b00)) begin
+                if (snoop_addr[39:6] == lr_addr[39:6])
+                    lr_valid <= 1'b0;
+                if (is_sc_q && (snoop_addr[39:6] == store_addr_q[39:6]))
+                    sc_failed <= 1'b1;
+            end
+
             case (mstate)
                 MS_IDLE: begin
                     mem_fault <= 1'b0;
-                    if (valid_in && (mem_read || mem_write || is_amo) && mmu_page_fault) begin
+                    if (valid_in && (mem_read || mem_write || is_amo) && (mmu_page_fault || pmp_fault)) begin
                         mem_fault       <= 1'b1;
                         mem_fault_pc    <= clean_pc_in;
-                        mem_fault_cause <= mem_read ? 64'd13 : 64'd15; // 13=Load page fault, 15=Store/AMO page fault
-                        mem_fault_tval  <= mmu_fault_va;
+                        mem_fault_cause <= mmu_page_fault ? (mem_read ? 64'd13 : 64'd15) :
+                                           (mem_read ? 64'd5 : 64'd7); // 5=Load access fault, 7=Store/AMO access fault
+                        mem_fault_tval  <= mmu_page_fault ? mmu_fault_va : alu_result;
                         valid_out       <= 1'b0;
                         reg_write_out   <= 1'b0;
                         mem_active      <= 1'b0;
+                        mstate          <= MS_IDLE;
+                    end else if (valid_in && (mem_read || mem_write || is_amo) && mmu_trans_busy) begin
+                        mem_active      <= 1'b1;
                         mstate          <= MS_IDLE;
                     end else if (valid_in && is_amo) begin
                         funct3_q      <= funct3;
@@ -239,13 +269,18 @@ module rv_mem (
                             rd_out        <= rd_in;
                             reg_write_out <= reg_write;
                             valid_out     <= 1'b0;
-                            lr_valid      <= 1'b1;
+                            if (snoop_valid && (snoop_type != 2'b00) && (snoop_addr[39:6] == eff_mem_addr[39:6])) begin
+                                lr_valid  <= 1'b0;
+                            end else begin
+                                lr_valid  <= 1'b1;
+                            end
                             lr_addr       <= eff_mem_addr;
                             is_sc_q       <= 1'b0;
                         end else if (amo_funct5 == `AMO_SC) begin
                             // SC: Store Conditional
-                            if (lr_valid && (lr_addr[39:3] == eff_mem_addr[39:3])) begin
+                            if (lr_valid && !snoop_kills_lr && (lr_addr[39:3] == eff_mem_addr[39:3])) begin
                                 lr_valid      <= 1'b0;
+                                sc_failed     <= 1'b0;
                                 dmem_awvalid  <= 1'b1;
                                 dmem_awaddr   <= eff_mem_addr;
                                 store_addr_q  <= eff_mem_addr;
@@ -258,7 +293,7 @@ module rv_mem (
                                 mstate        <= MS_DATA;
                                 rd_out        <= rd_in;
                                 reg_write_out <= 1'b1;
-                                result        <= 64'd0; // 0 = SC success
+                                result        <= 64'd0; // 0 = SC success (tentative)
                                 valid_out     <= 1'b0;
                                 is_sc_q       <= 1'b1;
                             end else begin
@@ -348,7 +383,7 @@ module rv_mem (
                             valid_out       <= 1'b1;
                             mem_fault       <= 1'b0;
                             if (is_sc_q)
-                                result      <= 64'd0;
+                                result      <= (sc_failed || snoop_kills_sc) ? 64'd1 : 64'd0;
                         end
                     end else if (dmem_rvalid && dmem_rready) begin
                         dmem_rready <= 1'b0;

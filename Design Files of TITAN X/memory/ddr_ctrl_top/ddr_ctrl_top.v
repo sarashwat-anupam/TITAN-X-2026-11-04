@@ -93,8 +93,8 @@ module ddr_ctrl_top (
     reg [3:0]  s_rid_r, s_bid_r;
     reg [1:0]  s_rresp_r, s_bresp_r;
 
-    assign s_arready = s_arready_r && init_done && !ref_req;
-    assign s_awready = s_awready_r && init_done && !ref_req;
+    assign s_arready = s_arready_r && init_done && !ref_req && !cmd_pend && sched_ready && (ctrl_state == CS_IDLE);
+    assign s_awready = s_awready_r && init_done && !ref_req && !cmd_pend && sched_ready && (ctrl_state == CS_IDLE);
     assign s_wready  = s_wready_r;
     assign s_bvalid  = s_bvalid_r;
     assign s_bresp   = s_bresp_r;
@@ -147,8 +147,8 @@ module ddr_ctrl_top (
             ctrl_state   <= CS_IDLE;
             // hold logic
         end else begin
-            s_bvalid_r   <= 1'b0;
-            s_rvalid_r   <= 1'b0;
+            if (s_bvalid_r && s_bready) s_bvalid_r <= 1'b0;
+            if (s_rvalid_r && s_rready) s_rvalid_r <= 1'b0;
             s_rresp_r    <= 2'h0;
             s_bresp_r    <= 2'h0;
 
@@ -170,13 +170,14 @@ module ddr_ctrl_top (
                     CS_IDLE: begin
                         s_arready_r <= 1'b1;
                         s_awready_r <= 1'b1;
-                        if (s_arvalid && !ref_req) begin
+                        if (s_arvalid && s_arready) begin
 `ifdef TB_CTRL_TRACE
                             $display("[CTRL] %0t accept AR %h", $time, s_araddr);
 `endif
                             cmd_addr      <= s_araddr;
                             cmd_id        <= s_arid;
                             s_arready_r   <= 1'b0;
+                            s_awready_r   <= 1'b0;
                             // Bank interleaved mapping (DDR4)
                             sched_bg      <= s_araddr[16:15];
                             sched_bank    <= s_araddr[14:12];
@@ -186,12 +187,13 @@ module ddr_ctrl_top (
                             cmd_pend      <= 1'b1;
                             wd_cnt        <= WD_LIMIT;
                             ctrl_state    <= CS_READ;
-                        end else if (s_awvalid && !ref_req) begin
+                        end else if (s_awvalid && s_awready) begin
 `ifdef TB_CTRL_TRACE
                             $display("[CTRL] %0t accept AW %h", $time, s_awaddr);
 `endif
                             cmd_addr      <= s_awaddr;
                             cmd_id        <= s_awid;
+                            s_arready_r   <= 1'b0;
                             s_awready_r   <= 1'b0;
                             s_wready_r    <= 1'b1;
                             ctrl_state    <= CS_WRITE;
@@ -199,12 +201,16 @@ module ddr_ctrl_top (
                     end
 
                     CS_READ: begin
-                        if (sched_rdvalid) begin
+                        if (s_rvalid_r) begin
+                            if (s_rready) begin
+                                s_rvalid_r <= 1'b0;
+                                ctrl_state <= CS_IDLE;
+                            end
+                        end else if (sched_rdvalid) begin
                             s_rdata_r  <= sched_rddata;
                             s_rvalid_r <= 1'b1;
                             s_rlast_r  <= 1'b1;
                             s_rid_r    <= cmd_id;
-                            if (s_rready) ctrl_state <= CS_IDLE;
                         end else begin
                             // No re-issue needed any more: the held cmd_pend
                             // contract guarantees the scheduler eventually
@@ -217,7 +223,6 @@ module ddr_ctrl_top (
                                 s_rvalid_r <= 1'b1;
                                 s_rlast_r  <= 1'b1;
                                 s_rid_r    <= cmd_id;
-                                if (s_rready) ctrl_state <= CS_IDLE;
                             end else
                                 wd_cnt <= wd_cnt - 16'h1;
                         end
@@ -247,16 +252,19 @@ module ddr_ctrl_top (
                         // NOT sched_ready, which is already high on the fire
                         // cycle itself and would OKAY a write that hadn't
                         // even been accepted yet (BUG-DDR-004).
-                        if (sched_cmd_done) begin
+                        if (s_bvalid_r) begin
+                            if (s_bready) begin
+                                s_bvalid_r <= 1'b0;
+                                ctrl_state <= CS_IDLE;
+                            end
+                        end else if (sched_cmd_done) begin
                             s_bvalid_r <= 1'b1;
                             s_bid_r    <= cmd_id;
-                            if (s_bready) ctrl_state <= CS_IDLE;
                         end else begin
                             if (wd_cnt == 16'h0) begin
                                 s_bvalid_r <= 1'b1;
                                 s_bresp_r  <= 2'b10;   // SLVERR
                                 s_bid_r    <= cmd_id;
-                                if (s_bready) ctrl_state <= CS_IDLE;
                             end else
                                 wd_cnt <= wd_cnt - 16'h1;
                         end

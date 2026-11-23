@@ -304,12 +304,7 @@ module axi4_crossbar #(
                         wr_rp[i]  <= wr_rp[i] + 2'd1;
                         wr_cnt[i] <= wr_cnt[i] - 2'd1;
                     end else if (wpush && wpop) begin
-                        // both: cnt unchanged. The push landed in the tail
-                        // slot, which EQUALS the head slot when cnt was 1 —
-                        // the new entry simply replaces the consumed one and
-                        // the pointer must hold. Advancing here (cnt>1) is
-                        // safe because tail != head then.
-                        if (wr_cnt[i] > 2'd1) wr_rp[i] <= wr_rp[i] + 2'd1;
+                        wr_rp[i]  <= wr_rp[i] + 2'd1;
                     end
 
                     rpush = (ar_tgt[i] < T_UNMAPPED) && m_arready[i] && m_arvalid[i];
@@ -336,8 +331,7 @@ module axi4_crossbar #(
                         b_rp[s]  <= b_rp[s] + 2'd1;
                         b_cnt[s] <= b_cnt[s] - 2'd1;
                     end else if (bpush && bpop) begin
-                        // replace-in-place when cnt==1, advance otherwise
-                        if (b_cnt[s] > 2'd1) b_rp[s] <= b_rp[s] + 2'd1;
+                        b_rp[s]  <= b_rp[s] + 2'd1;
                     end
 
                     rpush2 = ar_hs[s];
@@ -350,7 +344,7 @@ module axi4_crossbar #(
                         r_rp[s]  <= r_rp[s] + 2'd1;
                         r_cnt[s] <= r_cnt[s] - 2'd1;
                     end else if (rpush2 && rpop2) begin
-                        if (r_cnt[s] > 2'd1) r_rp[s] <= r_rp[s] + 2'd1;
+                        r_rp[s]  <= r_rp[s] + 2'd1;
                     end
                 end
             end
@@ -375,12 +369,8 @@ module axi4_crossbar #(
                         err_b_rp[i]  <= err_b_rp[i] + 2'd1;
                         err_b_cnt[i] <= err_b_cnt[i] - 2'd1;
                     end else if (bpush3 && bpop3) begin
-                        err_b_act[i] <= 1'b0;   // drained this one, next (if any)
-                        if (err_b_cnt[i] > 2'd1) begin
-                            err_b_rp[i] <= err_b_rp[i] + 2'd1;
-                            err_b_act[i] <= 1'b1;
-                        end
-                        // cnt unchanged: one in, one out
+                        err_b_rp[i]  <= err_b_rp[i] + 2'd1;
+                        err_b_act[i] <= 1'b1;
                     end
 
                     rpush3 = m_arvalid[i] && m_arready[i]
@@ -397,11 +387,8 @@ module axi4_crossbar #(
                         err_r_rp[i]  <= err_r_rp[i] + 2'd1;
                         err_r_cnt[i] <= err_r_cnt[i] - 2'd1;
                     end else if (rpush3 && rpop3) begin
-                        err_r_act[i] <= 1'b0;
-                        if (err_r_cnt[i] > 2'd1) begin
-                            err_r_rp[i] <= err_r_rp[i] + 2'd1;
-                            err_r_act[i] <= 1'b1;
-                        end
+                        err_r_rp[i]  <= err_r_rp[i] + 2'd1;
+                        err_r_act[i] <= 1'b1;
                     end
                 end
             end

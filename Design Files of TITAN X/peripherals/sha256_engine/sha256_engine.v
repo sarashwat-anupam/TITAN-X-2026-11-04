@@ -11,7 +11,7 @@ module sha256_engine (
     input  wire        pwrite,
     input  wire [7:0]  paddr,
     input  wire [31:0] pwdata,
-    output reg  [31:0] prdata,
+    output wire [31:0] prdata,
     output wire        pready,
     output wire        irq
 );
@@ -258,35 +258,31 @@ module sha256_engine (
         end
     end
 
-    // APB Interface
+    // APB Write Interface
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             start         <= 1'b0;
             init_hash     <= 1'b0;
             auto_pad      <= 1'b0;
             msg_len_bytes <= 32'h0;
-            prdata        <= 32'h0;
-        end else if (psel && penable) begin
-            if (pwrite) begin
-                if (paddr[7:6] == 2'b00)
-                    msg_block[paddr[5:2]] <= pwdata;
-                else if (paddr == 8'h60) begin
-                    start     <= pwdata[0];
-                    init_hash <= pwdata[1];
-                    auto_pad  <= pwdata[2];
-                end else if (paddr == 8'h64) begin
-                    msg_len_bytes <= pwdata;
-                end
-            end else begin
-                if (paddr[7:6] == 2'b00)
-                    prdata <= msg_block[paddr[5:2]];
-                else if (paddr[7:6] == 2'b01)
-                    prdata <= hash[paddr[4:2]];
-                else if (paddr == 8'h64)
-                    prdata <= msg_len_bytes;
-                else
-                    prdata <= {30'h0, done, active};
+        end else if (psel && penable && pwrite) begin
+            if (paddr[7:6] == 2'b00)
+                msg_block[paddr[5:2]] <= pwdata;
+            else if (paddr == 8'h60) begin
+                start     <= pwdata[0];
+                init_hash <= pwdata[1];
+                auto_pad  <= pwdata[2];
+            end else if (paddr == 8'h64) begin
+                msg_len_bytes <= pwdata;
             end
+        end else begin
+            start <= 1'b0; // pulse start for 1 cycle
         end
     end
+
+    // APB Read Interface (Combinational for zero-wait-state bus compatibility)
+    assign prdata = (paddr[7:6] == 2'b00)  ? msg_block[paddr[5:2]] :
+                    (paddr[7:5] == 3'b010) ? hash[paddr[4:2]] :
+                    (paddr == 8'h60)       ? {29'h0, auto_pad, done, active} :
+                    (paddr == 8'h64)       ? msg_len_bytes : {30'h0, done, active};
 endmodule

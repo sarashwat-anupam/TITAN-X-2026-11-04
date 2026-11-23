@@ -67,9 +67,11 @@ module rv_execute #(
     input  wire [63:0] fpu_result,
     input  wire        fpu_valid,
     input  wire        fpu_done,
+    input  wire        fpu_int_valid,
     input  wire [4:0]  fpu_fflags,
     output wire [2:0]  frm_out,
     output wire        fp_stall,
+    output wire [63:0] src1_out,
     // SFENCE.VMA invalidation to MMUs
     output wire        sfence_vma_pulse,
     output wire        sfence_asid_en,
@@ -105,7 +107,10 @@ module rv_execute #(
     output wire [1:0]  priv_mode_out,
     // LR/SC reservation (exported to memory stage)
     output reg  [63:0] lr_addr,
-    output reg         lr_valid
+    output reg         lr_valid,
+    // PMP configuration outputs
+    output wire [63:0]  pmpcfg0_out,
+    output wire [303:0] pmpaddr_packed_out
 );
 
     // -------------------------------------------------------
@@ -621,14 +626,17 @@ module rv_execute #(
         .irq_pending  (irq_pend),
         .fflags_we    (fpu_done && (|fpu_fflags)),
         .fflags_in    (fpu_fflags),
-        .frm_out      (frm_out)
+        .frm_out      (frm_out),
+        .pmpcfg0_out  (pmpcfg0_out),
+        .pmpaddr_packed_out(pmpaddr_packed_out)
     );
 
 
-    assign fp_stall = is_fp_op && !fpu_done;
+    assign fp_stall = 1'b0;
+    assign src1_out = src1;
     assign sfence_vma_pulse = ex_exit && is_sfence_vma && priv_sfence_ok;
-    assign sfence_asid_en   = (rs2_addr != 5'h0);
-    assign sfence_va_en     = (rs1_addr != 5'h0);
+    assign sfence_asid_en   = sfence_vma_pulse && (rs2_addr != 5'h0);
+    assign sfence_va_en     = sfence_vma_pulse && (rs1_addr != 5'h0);
     assign sfence_va_val    = src1;
     assign sfence_asid_val  = src2_reg;
 
@@ -754,6 +762,8 @@ module rv_execute #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             branch_target <= 64'h0;
+        end else if (clean_mem_fault_in) begin
+            branch_target <= branch_tgt;
         end else if (flush_ex_3) begin
             branch_target <= 64'h0;
         end else if (!stall && !mul_div_stall && !fp_stall && !mx_fin) begin
@@ -778,6 +788,21 @@ module rv_execute #(
             trap_pc_out    <= 64'h0;
             trap_cause_out <= 64'h0;
             trap_tval_out  <= 64'h0;
+        end else if (clean_mem_fault_in) begin
+            rd_out         <= 5'h0;
+            funct3_out     <= 3'h0;
+            opcode_out     <= 7'h0;
+            mem_read_out   <= 1'b0;
+            mem_write_out  <= 1'b0;
+            reg_write_out  <= 1'b0;
+            is_amo_out     <= 1'b0;
+            amo_funct5_out <= 5'h0;
+            valid_out      <= 1'b0;
+            branch_taken   <= 1'b1;
+            trap_taken     <= 1'b1;
+            trap_pc_out    <= trap_pc_w;
+            trap_cause_out <= trap_cause_w;
+            trap_tval_out  <= trap_tval_w;
         end else if (flush_ex_4) begin
             rd_out         <= 5'h0;
             funct3_out     <= 3'h0;
@@ -800,11 +825,11 @@ module rv_execute #(
             // An interrupted or trapping beat commits NOTHING — including
             // no bus side effects: a preempted store must not reach the
             // interconnect (it re-executes after the handler returns).
-            mem_read_out  <= mem_read && !irq_take && !trap_req_c && !clean_mem_fault_in;
-            mem_write_out <= mem_write && !irq_take && !trap_req_c && !clean_mem_fault_in;
-            reg_write_out <= reg_write && !trap_req_c && !irq_take && !clean_mem_fault_in &&
-                             (!is_fp_op || fpu_done);
-            is_amo_out    <= is_amo;
+            mem_read_out  <= valid_in && mem_read && !irq_take && !trap_req_c && !clean_mem_fault_in;
+            mem_write_out <= valid_in && mem_write && !irq_take && !trap_req_c && !clean_mem_fault_in;
+            reg_write_out <= valid_in && reg_write && !trap_req_c && !irq_take && !clean_mem_fault_in &&
+                             (!is_fp_op || (fpu_done && fpu_int_valid));
+            is_amo_out    <= valid_in && is_amo;
             amo_funct5_out<= amo_funct5;
             valid_out     <= valid_in && !trap_req_c && !clean_fe_fault_in && !clean_mem_fault_in;
             branch_taken  <= branch_comb && valid_in;
