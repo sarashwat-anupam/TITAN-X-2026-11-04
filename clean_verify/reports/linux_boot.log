@@ -1,71 +1,454 @@
 ===================================================================
  SMVDU TITAN-X SoC — Multi-Core Linux OS Boot Bringup Testbench   
  Platform: 4-Core RV64GC (Sv39 MMU + March C+ MBIST + ACLINT)     
- Max Cycles: 40000000
+ Max Cycles: 70000000
 ===================================================================
 
-�[B2L_WCOLL] cyc=1825773 base=0x0082200820 beat=0 data=0x2d74756f64747300 strb=0xff last=1
-[B2L_WISSUE] cyc=1825774 cnt=0 awaddr=0x0082200820 wdata=0x2d74756f64747300 awrdy=1 wrdy=0
-[B2L_WISSUE] cyc=1825775 cnt=0 awaddr=0x0082200820 wdata=0x2d74756f64747300 awrdy=0 wrdy=1
-[B2L_WCOLL] cyc=1825800 base=0x0082200828 beat=0 data=0x6d69740068746170 strb=0xff last=1
-[B2L_WISSUE] cyc=1825801 cnt=0 awaddr=0x0082200828 wdata=0x6d69740068746170 awrdy=1 wrdy=0
-[B2L_WISSUE] cyc=1825802 cnt=0 awaddr=0x0082200828 wdata=0x6d69740068746170 awrdy=0 wrdy=1
-[SIM INFO] 2000000 cycles elapsed | Console: 1 chars received...
-[SIM INFO] 4000000 cycles elapsed | Console: 1 chars received...
+[SIM INFO] 999999 cycles elapsed | Console: 1 chars | H0_PC=0x8001054c (ret=117358) | ra=0x80010564 sp=0x80033e80 s0=0x80033ec0 s1=0x1 s2=0x8001c000 a0=0x8001c2dd a1=0x2dd a2=0x2a6
+[B2L_WCOLL] cyc=1605980 base=0x0082200820 beat=0 data=0x6300736c6c65632d strb=0xff last=1
+[B2L_WISSUE] cyc=1605981 cnt=0 awaddr=0x0082200820 wdata=0x6300736c6c65632d awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=1605982 cnt=0 awaddr=0x0082200820 wdata=0x6300736c6c65632d awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=1606007 base=0x0082200828 beat=0 data=0x6c62697461706d6f strb=0xff last=1
+[B2L_WISSUE] cyc=1606008 cnt=0 awaddr=0x0082200828 wdata=0x6c62697461706d6f awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=1606009 cnt=0 awaddr=0x0082200828 wdata=0x6c62697461706d6f awrdy=0 wrdy=1
+[SIM INFO] 1999999 cycles elapsed | Console: 1 chars | H0_PC=0x8001054c (ret=244978) | ra=0x80010564 sp=0x80038d60 s0=0x80038da0 s1=0x1 s2=0x82200000 a0=0x822004e5 a1=0x4e5 a2=0x4ae
+[SIM INFO] 2999999 cycles elapsed | Console: 1 chars | H0_PC=0x80010528 (ret=360701) | ra=0x800104d4 sp=0x80038c40 s0=0x80038c80 s1=0x3 s2=0x82200000 a0=0x82200568 a1=0x568 a2=0x534
+[SIM INFO] 3999999 cycles elapsed | Console: 1 chars | H0_PC=0x8001054c (ret=489542) | ra=0x80010564 sp=0x80038d00 s0=0x80038d40 s1=0x1 s2=0x82200000 a0=0x82200777 a1=0x777 a2=0x740
+[SIM INFO] 4999999 cycles elapsed | Console: 1 chars | H0_PC=0x8001046c (ret=625175) | ra=0x800105d4 sp=0x80038db0 s0=0x80038dc0 s1=0x3 s2=0x82200000 a0=0x82200000 a1=0x798 a2=0x79c
 
-O
-pOepneSnBSIB Iv 1v.12.2
+OpenSBI v1.2
 [BOOT_EVENT] OpenSBI v1.2 banner detected!
 
- 
-    _ ______ _                                      _ ________ __ ______ __ _________
- 
-  /  /_ __ [SIM INFO] 6000000 cycles elapsed | Console: 67 chars received...
-_\  \                                  /  /_ ______|_ |  _  _\ _\ _    _ |_|
- 
-|  ||  |  |  || _| __ __ _    _ ____ __  __ __ _|  |( _(____ _|  || _|)_ )| || || |
- 
-|  ||  |  |  ||  |' _' _\  \/  /_  _\  \' _' _\  \\ _\____ _\ |\ |  _  _<  <|  || |
- 
-|  || _|__|_ ||  || _|)_ )|  |  _ __/_ /|  ||  || _|______)_ )|  || _|)_ )| || || _|_
- 
-  \ _\______/_|/ |. _.__/_ /\ _\____|__||_ || _||__|________/_|/_|______/__/________|_|
- 
-              |  || |
- [SIM INFO] 8000000 cycles elapsed | Console: 299 chars received...
-
-              | _||_|
-
+   ____                    _____ ____ _____
+  / __ \                  / ____|  _ \_   _|
+ | |  | |[SIM INFO] 5999999 cycles elapsed | Console: 115 chars | H0_PC=0x8000fcdc (ret=813208) | ra=0x8000848c sp=0x80038de0 s0=0x80038df0 s1=0x5f s2=0x800200a8 a0=0x5f a1=0x5f a2=0x1
+_ __   ___ _ __ | (___ | |_) || |
+ | |  | | '_ \ / _ \ '_ \ \___ \|  _ < | |
+ | |__| | |_) |  __/ | | |____) | |_)[SIM INFO] 6999999 cycles elapsed | Console: 231 chars | H0_PC=0x8000fc88 (ret=1001472) | ra=0x8000848c sp=0x80038de0 s0=0x80038df0 s1=0x20 s2=0x800200a8 a0=0x20 a1=0x20 a2=0x1
+ || |_
+  \____/| .__/ \___|_| |_|_____/|____/_____|
+        | |
+        |_|
 
 
-[SIM INFO] 10000000 cycles elapsed | Console: 315 chars received...
-[SIM INFO] 12000000 cycles elapsed | Console: 315 chars received...
-[SIM INFO] 14000000 cycles elapsed | Console: 315 chars received...
-[SIM INFO] 16000000 cycles elapsed | Console: 315 chars received...
-[SIM INFO] 18000000 cycles elapsed | Console: 315 chars received...
-[SIM INFO] 20000000 cycles elapsed | Console: 315 chars received...
-[SIM INFO] 22000000 cycles elapsed | Console: 315 chars received...
-[SIM INFO] 24000000 cycles elapsed | Console: 315 chars received...
-[SIM INFO] 26000000 cycles elapsed | Console: 315 chars received...
-[SIM INFO] 28000000 cycles elapsed | Console: 315 chars received...
-[SIM INFO] 30000000 cycles elapsed | Console: 315 chars received...
-[SIM INFO] 32000000 cycles elapsed | Console: 315 chars received...
-[SIM INFO] 34000000 cycles elapsed | Console: 315 chars received...
-[SIM INFO] 36000000 cycles elapsed | Console: 315 chars received...
-[SIM INFO] 38000000 cycles elapsed | Console: 315 chars received...
-[SIM INFO] 40000000 cycles elapsed | Console: 315 chars received...
+>>> [BOOT PROGRESS] Cycle 7704815 (ret=1134211): Calling sbi_irqchip_init
+[SIM INFO] 7999999 cycles elapsed | Console: 315 chars | H0_PC=0x80010480 (ret=1176191) | ra=0x80010564 sp=0x80038d20 s0=0x80038d70 s1=0x1 s2=0x82200000 a0=0x822002d9 a1=0x2d9 a2=0x2a2
+[SIM INFO] 8999999 cycles elapsed | Console: 315 chars | H0_PC=0x800103a0 (ret=1301663) | ra=0x80010564 sp=0x80038c50 s0=0x80038c60 s1=0x1 s2=0x82200000 a0=0x82200000 a1=0x2a1 a2=0x1
+[SIM INFO] 9999999 cycles elapsed | Console: 315 chars | H0_PC=0x0 (ret=1425148) | ra=0x80010564 sp=0x80038c60 s0=0x80038ca0 s1=0x1 s2=0x82200000 a0=0x82200553 a1=0x553 a2=0x51c
+[SIM INFO] 10999999 cycles elapsed | Console: 315 chars | H0_PC=0x8001054c (ret=1571262) | ra=0x80010564 sp=0x80038d00 s0=0x80038d40 s1=0x1 s2=0x82200000 a0=0x822001e7 a1=0x1e7 a2=0x1b0
+[SIM INFO] 11999999 cycles elapsed | Console: 315 chars | H0_PC=0x800103b4 (ret=1713304) | ra=0x80010564 sp=0x80038d20 s0=0x80038d30 s1=0x1 s2=0x82200000 a0=0x82200000 a1=0x1a1 a2=0x1
+[SIM INFO] 12999999 cycles elapsed | Console: 315 chars | H0_PC=0x0 (ret=1852337) | ra=0x80010564 sp=0x80038d30 s0=0x80038d70 s1=0x1 s2=0x82200000 a0=0x82200108 a1=0x108 a2=0xd1
+[SIM INFO] 13999999 cycles elapsed | Console: 315 chars | H0_PC=0x8001049c (ret=1995133) | ra=0x80010790 sp=0x80038d30 s0=0x80038dc0 s1=0xe4 s2=0x80038dcc a0=0x82200000 a1=0xe4 a2=0x80038d78
+[SIM INFO] 14999999 cycles elapsed | Console: 315 chars | H0_PC=0x8001054c (ret=2133324) | ra=0x80010564 sp=0x80038d80 s0=0x80038dc0 s1=0x1 s2=0x82200000 a0=0x822002d4 a1=0x2d4 a2=0x29d
+[SIM INFO] 15999999 cycles elapsed | Console: 315 chars | H0_PC=0x800103fc (ret=2270855) | ra=0x80010564 sp=0x80038cd0 s0=0x80038ce0 s1=0x1 s2=0x82200000 a0=0x82200000 a1=0x1a3 a2=0x1
+[SIM INFO] 16999999 cycles elapsed | Console: 315 chars | H0_PC=0x0 (ret=2407597) | ra=0x80010564 sp=0x80038d30 s0=0x80038d70 s1=0x1 s2=0x82200000 a0=0x82200145 a1=0x145 a2=0x10e
+[SIM INFO] 17999999 cycles elapsed | Console: 315 chars | H0_PC=0x8001054c (ret=2549034) | ra=0x80010564 sp=0x80038d00 s0=0x80038d40 s1=0x1 s2=0x82200000 a0=0x822003de a1=0x3de a2=0x3a7
+[SIM INFO] 18999999 cycles elapsed | Console: 315 chars | H0_PC=0x8000ff38 (ret=2676290) | ra=0x80010c30 sp=0x80038d50 s0=0x80038d60 s1=0x82200000 s2=0x80038d9c a0=0x82200000 a1=0xed a2=0xd
 
-[SIM INFO] Reached max cycle limit (40000000). Stopping simulation.
+>>> [BOOT PROGRESS] Cycle 19208576 (ret=2702221): Calling sbi_ipi_init
+[SIM INFO] 19999999 cycles elapsed | Console: 315 chars | H0_PC=0x80010584 (ret=2809699) | ra=0x80010790 sp=0x80038c40 s0=0x80038cd0 s1=0x1 s2=0x80038cdc a0=0x822001d0 a1=0x1b4 a2=0x1b1
+[SIM INFO] 20999999 cycles elapsed | Console: 315 chars | H0_PC=0x8001054c (ret=2933819) | ra=0x80010564 sp=0x80038c40 s0=0x80038c80 s1=0x1 s2=0x82200000 a0=0x82200552 a1=0x552 a2=0x51b
+[SIM INFO] 21999999 cycles elapsed | Console: 315 chars | H0_PC=0x80010440 (ret=3057003) | ra=0x80010564 sp=0x80038c30 s0=0x80038c40 s1=0x1 s2=0x82200000 a0=0x82200000 a1=0x4ab a2=0x4ac
+[SIM INFO] 22999999 cycles elapsed | Console: 315 chars | H0_PC=0x80010390 (ret=3203056) | ra=0x800104d4 sp=0x80038c80 s0=0x80038c90 s1=0x170 s2=0x82200000 a0=0x82200000 a1=0x170 a2=0x4
+[SIM INFO] 23999999 cycles elapsed | Console: 315 chars | H0_PC=0x800104d0 (ret=3343585) | ra=0x800104d4 sp=0x80038cc0 s0=0x80038d00 s1=0x244 s2=0x82200000 a0=0x82200000 a1=0x244 a2=0x4
+[SIM INFO] 24999999 cycles elapsed | Console: 315 chars | H0_PC=0x8001054c (ret=3482963) | ra=0x80010564 sp=0x80038cc0 s0=0x80038d00 s1=0x1 s2=0x82200000 a0=0x822001e0 a1=0x1e0 a2=0x1a9
+[SIM INFO] 25999999 cycles elapsed | Console: 315 chars | H0_PC=0x800103ec (ret=3625569) | ra=0x80010564 sp=0x80038cb0 s0=0x80038cc0 s1=0x1 s2=0x82200000 a0=0x82200000 a1=0x1ab a2=0x1
+[SIM INFO] 26999999 cycles elapsed | Console: 315 chars | H0_PC=0x80010470 (ret=3763116) | ra=0x800105a8 sp=0x80038c60 s0=0x80038cb0 s1=0x1 s2=0x82200000 a0=0x82200000 a1=0x304 a2=0x30e
+[SIM INFO] 27999999 cycles elapsed | Console: 315 chars | H0_PC=0x800103b4 (ret=3901915) | ra=0x80010564 sp=0x80038d00 s0=0x80038d10 s1=0x1 s2=0x82200000 a0=0x82200000 a1=0x19e a2=0x1
+[SIM INFO] 28999999 cycles elapsed | Console: 315 chars | H0_PC=0x8001054c (ret=4037782) | ra=0x80010564 sp=0x80038cc0 s0=0x80038d00 s1=0x1 s2=0x82200000 a0=0x822001d6 a1=0x1d6 a2=0x19f
+[SIM INFO] 29999999 cycles elapsed | Console: 315 chars | H0_PC=0x8001054c (ret=4179113) | ra=0x80010564 sp=0x80038d10 s0=0x80038d50 s1=0x1 s2=0x82200000 a0=0x822003e2 a1=0x3e2 a2=0x3ab
+[SIM INFO] 30999999 cycles elapsed | Console: 315 chars | H0_PC=0x8001054c (ret=4307104) | ra=0x80010564 sp=0x80038d20 s0=0x80038d60 s1=0x1 s2=0x82200000 a0=0x82200770 a1=0x770 a2=0x739
+
+>>> [BOOT PROGRESS] Cycle 31557574 (ret=4373349): Calling sbi_tlb_init
+
+>>> [BOOT PROGRESS] Cycle 31607038 (ret=4376127): Calling sbi_timer_init
+[SIM INFO] 31999999 cycles elapsed | Console: 315 chars | H0_PC=0x80010404 (ret=4431852) | ra=0x800105a8 sp=0x80038d70 s0=0x80038d80 s1=0x3 s2=0x82200000 a0=0x82200000 a1=0x330 a2=0x11
+[SIM INFO] 32999999 cycles elapsed | Console: 315 chars | H0_PC=0x0 (ret=4555655) | ra=0x80010564 sp=0x80038bf0 s0=0x80038c30 s1=0x1 s2=0x82200000 a0=0x822005e5 a1=0x5e5 a2=0x5ae
+[SIM INFO] 33999999 cycles elapsed | Console: 315 chars | H0_PC=0x8001054c (ret=4682759) | ra=0x80010564 sp=0x80038bf0 s0=0x80038c30 s1=0x1 s2=0x82200000 a0=0x822003e4 a1=0x3e4 a2=0x3ad
+[SIM INFO] 34999999 cycles elapsed | Console: 315 chars | H0_PC=0x8001054c (ret=4817480) | ra=0x80010564 sp=0x80038c70 s0=0x80038cb0 s1=0x1 s2=0x82200000 a0=0x822001e2 a1=0x1e2 a2=0x1ab
+[SIM INFO] 35999999 cycles elapsed | Console: 315 chars | H0_PC=0x80010420 (ret=4963170) | ra=0x800105a8 sp=0x80038cb0 s0=0x80038cc0 s1=0x3 s2=0x82200000 a0=0x82200000 a1=0x120 a2=0x10
+[SIM INFO] 36999999 cycles elapsed | Console: 315 chars | H0_PC=0x8001054c (ret=5102613) | ra=0x80010564 sp=0x80038cc0 s0=0x80038d00 s1=0x1 s2=0x82200000 a0=0x82200242 a1=0x242 a2=0x20b
+[SIM INFO] 37999999 cycles elapsed | Console: 315 chars | H0_PC=0x80010ed0 (ret=5244296) | ra=0x80010ecc sp=0x80038c80 s0=0x80038cf0 s1=0x244 s2=0x82200000 a0=0x8220027c a1=0x27c a2=0x0
+[SIM INFO] 38999999 cycles elapsed | Console: 315 chars | H0_PC=0x800103bc (ret=5381946) | ra=0x80010564 sp=0x80038c30 s0=0x80038c40 s1=0x1 s2=0x82200000 a0=0x82200000 a1=0x1a7 a2=0x1
+[SIM INFO] 39999999 cycles elapsed | Console: 315 chars | H0_PC=0x80010c74 (ret=5515939) | ra=0x80010c30 sp=0x80038c40 s0=0x80038c70 s1=0x82200000 s2=0x80038c7c a0=0x914 a1=0x54 a2=0xc
+[SIM INFO] 40999999 cycles elapsed | Console: 315 chars | H0_PC=0x80010464 (ret=5661408) | ra=0x800105d4 sp=0x80038cb0 s0=0x80038cc0 s1=0x3 s2=0x82200000 a0=0x82200000 a1=0x414 a2=0x418
+[SIM INFO] 41999999 cycles elapsed | Console: 315 chars | H0_PC=0x8001054c (ret=5796262) | ra=0x80010564 sp=0x80038cc0 s0=0x80038d00 s1=0x1 s2=0x82200000 a0=0x822001d6 a1=0x1d6 a2=0x19f
+[SIM INFO] 42999999 cycles elapsed | Console: 315 chars | H0_PC=0x80010560 (ret=5932088) | ra=0x80010564 sp=0x80038c70 s0=0x80038cb0 s1=0x1 s2=0x82200000 a0=0x82200000 a1=0x19f a2=0x1
+[SIM INFO] 43999999 cycles elapsed | Console: 315 chars | H0_PC=0x80010438 (ret=6057539) | ra=0x80010564 sp=0x80038d00 s0=0x80038d10 s1=0x1 s2=0x82200000 a0=0x82200000 a1=0x73a a2=0x73b
+
+>>> [BOOT PROGRESS] Cycle 44213085 (ret=6083191): Calling sbi_ecall_init
+
+>>> [BOOT PROGRESS] Cycle 44216035 (ret=6083468): Calling sbi_domain_finalize
+[SIM INFO] 44999999 cycles elapsed | Console: 315 chars | H0_PC=0x0 (ret=6190237) | ra=0x80010564 sp=0x80038d70 s0=0x80038db0 s1=0x1 s2=0x82200000 a0=0x82200553 a1=0x553 a2=0x51c
+
+>>> [BOOT PROGRESS] Cycle 45238767 (ret=6219760): Calling sbi_hart_pmp_configure
+[SIM INFO] 45999999 cycles elapsed | Console: 315 chars | H0_PC=0x80010530 (ret=6329739) | ra=0x800104d4 sp=0x80038d50 s0=0x80038d90 s1=0x3 s2=0x82200000 a0=0x82200168 a1=0x168 a2=0x134
+[SIM INFO] 46999999 cycles elapsed | Console: 315 chars | H0_PC=0x0 (ret=6462288) | ra=0x80010564 sp=0x80038dc0 s0=0x80038e00 s1=0x1 s2=0x82200000 a0=0x82200245 a1=0x245 a2=0x20e
+[SIM INFO] 47999999 cycles elapsed | Console: 315 chars | H0_PC=0x8001054c (ret=6595274) | ra=0x80010564 sp=0x80038de0 s0=0x80038e20 s1=0x1 s2=0x82200000 a0=0x822003d6 a1=0x3d6 a2=0x39f
+[SIM INFO] 48999999 cycles elapsed | Console: 315 chars | H0_PC=0x8001054c (ret=6726970) | ra=0x80010564 sp=0x80038de0 s0=0x80038e20 s1=0x1 s2=0x82200000 a0=0x822004e7 a1=0x4e7 a2=0x4b0
+[SIM INFO] 49999999 cycles elapsed | Console: 315 chars | H0_PC=0x8001040c (ret=6850015) | ra=0x80010564 sp=0x80038cd0 s0=0x80038ce0 s1=0x1 s2=0x82200000 a0=0x82200000 a1=0x30c a2=0x1
+[B2L_WCOLL] cyc=50306907 base=0x008220082f beat=0 data=0x6c00000000000000 strb=0x80 last=1
+[B2L_WISSUE] cyc=50306908 cnt=0 awaddr=0x008220082f wdata=0x6c00000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50306909 cnt=0 awaddr=0x008220082f wdata=0x6c00000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50306934 base=0x008220082e beat=0 data=0x0065000000000000 strb=0x40 last=1
+[B2L_WISSUE] cyc=50306935 cnt=0 awaddr=0x008220082e wdata=0x0065000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50306936 cnt=0 awaddr=0x008220082e wdata=0x0065000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50306961 base=0x008220082d beat=0 data=0x0000630000000000 strb=0x20 last=1
+[B2L_WISSUE] cyc=50306962 cnt=0 awaddr=0x008220082d wdata=0x0000630000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50306963 cnt=0 awaddr=0x008220082d wdata=0x0000630000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50306988 base=0x008220082c beat=0 data=0x0000002d00000000 strb=0x10 last=1
+[B2L_WISSUE] cyc=50306989 cnt=0 awaddr=0x008220082c wdata=0x0000002d00000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50306990 cnt=0 awaddr=0x008220082c wdata=0x0000002d00000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50307015 base=0x008220082b beat=0 data=0x0000000073000000 strb=0x08 last=1
+[B2L_WISSUE] cyc=50307016 cnt=0 awaddr=0x008220082b wdata=0x0000000073000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50307017 cnt=0 awaddr=0x008220082b wdata=0x0000000073000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50307042 base=0x008220082a beat=0 data=0x0000000000730000 strb=0x04 last=1
+[B2L_WISSUE] cyc=50307043 cnt=0 awaddr=0x008220082a wdata=0x0000000000730000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50307044 cnt=0 awaddr=0x008220082a wdata=0x0000000000730000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50307069 base=0x0082200829 beat=0 data=0x0000000000006500 strb=0x02 last=1
+[B2L_WISSUE] cyc=50307070 cnt=0 awaddr=0x0082200829 wdata=0x0000000000006500 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50307071 cnt=0 awaddr=0x0082200829 wdata=0x0000000000006500 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50307096 base=0x0082200828 beat=0 data=0x0000000000000072 strb=0x01 last=1
+[B2L_WISSUE] cyc=50307097 cnt=0 awaddr=0x0082200828 wdata=0x0000000000000072 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50307098 cnt=0 awaddr=0x0082200828 wdata=0x0000000000000072 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50307123 base=0x0082200827 beat=0 data=0x6400000000000000 strb=0x80 last=1
+[B2L_WISSUE] cyc=50307124 cnt=0 awaddr=0x0082200827 wdata=0x6400000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50307125 cnt=0 awaddr=0x0082200827 wdata=0x6400000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50307150 base=0x0082200826 beat=0 data=0x0064000000000000 strb=0x40 last=1
+[B2L_WISSUE] cyc=50307151 cnt=0 awaddr=0x0082200826 wdata=0x0064000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50307152 cnt=0 awaddr=0x0082200826 wdata=0x0064000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50307177 base=0x0082200825 beat=0 data=0x0000610000000000 strb=0x20 last=1
+[B2L_WISSUE] cyc=50307178 cnt=0 awaddr=0x0082200825 wdata=0x0000610000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50307179 cnt=0 awaddr=0x0082200825 wdata=0x0000610000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50307204 base=0x0082200824 beat=0 data=0x0000002300000000 strb=0x10 last=1
+[B2L_WISSUE] cyc=50307205 cnt=0 awaddr=0x0082200824 wdata=0x0000002300000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50307206 cnt=0 awaddr=0x0082200824 wdata=0x0000002300000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50307231 base=0x0082200823 beat=0 data=0x0000000009000000 strb=0x08 last=1
+[B2L_WISSUE] cyc=50307232 cnt=0 awaddr=0x0082200823 wdata=0x0000000009000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50307233 cnt=0 awaddr=0x0082200823 wdata=0x0000000009000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50307258 base=0x0082200822 beat=0 data=0x0000000000000000 strb=0x04 last=1
+[B2L_WISSUE] cyc=50307259 cnt=0 awaddr=0x0082200822 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50307260 cnt=0 awaddr=0x0082200822 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50307285 base=0x0082200821 beat=0 data=0x0000000000000000 strb=0x02 last=1
+[B2L_WISSUE] cyc=50307286 cnt=0 awaddr=0x0082200821 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50307287 cnt=0 awaddr=0x0082200821 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50307312 base=0x0082200820 beat=0 data=0x0000000000000000 strb=0x01 last=1
+[B2L_WISSUE] cyc=50307313 cnt=0 awaddr=0x0082200820 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50307314 cnt=0 awaddr=0x0082200820 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50415849 base=0x008220082f beat=0 data=0x0900000000000000 strb=0x80 last=1
+[B2L_WISSUE] cyc=50415850 cnt=0 awaddr=0x008220082f wdata=0x0900000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50415851 cnt=0 awaddr=0x008220082f wdata=0x0900000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50415876 base=0x008220082e beat=0 data=0x0000000000000000 strb=0x40 last=1
+[B2L_WISSUE] cyc=50415877 cnt=0 awaddr=0x008220082e wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50415878 cnt=0 awaddr=0x008220082e wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50415903 base=0x008220082d beat=0 data=0x0000000000000000 strb=0x20 last=1
+[B2L_WISSUE] cyc=50415904 cnt=0 awaddr=0x008220082d wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50415905 cnt=0 awaddr=0x008220082d wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50415930 base=0x008220082c beat=0 data=0x0000000000000000 strb=0x10 last=1
+[B2L_WISSUE] cyc=50415931 cnt=0 awaddr=0x008220082c wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50415932 cnt=0 awaddr=0x008220082c wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50415957 base=0x008220082b beat=0 data=0x0000000002000000 strb=0x08 last=1
+[B2L_WISSUE] cyc=50415958 cnt=0 awaddr=0x008220082b wdata=0x0000000002000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50415959 cnt=0 awaddr=0x008220082b wdata=0x0000000002000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50415984 base=0x008220082a beat=0 data=0x0000000000000000 strb=0x04 last=1
+[B2L_WISSUE] cyc=50415985 cnt=0 awaddr=0x008220082a wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50415986 cnt=0 awaddr=0x008220082a wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50416011 base=0x0082200829 beat=0 data=0x0000000000000000 strb=0x02 last=1
+[B2L_WISSUE] cyc=50416012 cnt=0 awaddr=0x0082200829 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50416013 cnt=0 awaddr=0x0082200829 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50416038 base=0x0082200828 beat=0 data=0x0000000000000000 strb=0x01 last=1
+[B2L_WISSUE] cyc=50416039 cnt=0 awaddr=0x0082200828 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50416040 cnt=0 awaddr=0x0082200828 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50416065 base=0x0082200827 beat=0 data=0x0200000000000000 strb=0x80 last=1
+[B2L_WISSUE] cyc=50416066 cnt=0 awaddr=0x0082200827 wdata=0x0200000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50416067 cnt=0 awaddr=0x0082200827 wdata=0x0200000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50416092 base=0x0082200826 beat=0 data=0x0000000000000000 strb=0x40 last=1
+[B2L_WISSUE] cyc=50416093 cnt=0 awaddr=0x0082200826 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50416094 cnt=0 awaddr=0x0082200826 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50416119 base=0x0082200825 beat=0 data=0x0000000000000000 strb=0x20 last=1
+[B2L_WISSUE] cyc=50416120 cnt=0 awaddr=0x0082200825 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50416121 cnt=0 awaddr=0x0082200825 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50416146 base=0x0082200824 beat=0 data=0x0000000000000000 strb=0x10 last=1
+[B2L_WISSUE] cyc=50416147 cnt=0 awaddr=0x0082200824 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50416148 cnt=0 awaddr=0x0082200824 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50416173 base=0x0082200823 beat=0 data=0x0000000002000000 strb=0x08 last=1
+[B2L_WISSUE] cyc=50416174 cnt=0 awaddr=0x0082200823 wdata=0x0000000002000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50416175 cnt=0 awaddr=0x0082200823 wdata=0x0000000002000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50416200 base=0x0082200822 beat=0 data=0x0000000000000000 strb=0x04 last=1
+[B2L_WISSUE] cyc=50416201 cnt=0 awaddr=0x0082200822 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50416202 cnt=0 awaddr=0x0082200822 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50416227 base=0x0082200821 beat=0 data=0x0000000000000000 strb=0x02 last=1
+[B2L_WISSUE] cyc=50416228 cnt=0 awaddr=0x0082200821 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50416229 cnt=0 awaddr=0x0082200821 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50416254 base=0x0082200820 beat=0 data=0x0000000000000000 strb=0x01 last=1
+[B2L_WISSUE] cyc=50416255 cnt=0 awaddr=0x0082200820 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50416256 cnt=0 awaddr=0x0082200820 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50514002 base=0x008220082f beat=0 data=0x0000000000000000 strb=0x80 last=1
+[B2L_WISSUE] cyc=50514003 cnt=0 awaddr=0x008220082f wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50514004 cnt=0 awaddr=0x008220082f wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50514029 base=0x008220082e beat=0 data=0x00e1000000000000 strb=0x40 last=1
+[B2L_WISSUE] cyc=50514030 cnt=0 awaddr=0x008220082e wdata=0x00e1000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50514031 cnt=0 awaddr=0x008220082e wdata=0x00e1000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50514056 base=0x008220082d beat=0 data=0x0000f50000000000 strb=0x20 last=1
+[B2L_WISSUE] cyc=50514057 cnt=0 awaddr=0x008220082d wdata=0x0000f50000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50514058 cnt=0 awaddr=0x008220082d wdata=0x0000f50000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50514083 base=0x008220082c beat=0 data=0x0000000500000000 strb=0x10 last=1
+[B2L_WISSUE] cyc=50514084 cnt=0 awaddr=0x008220082c wdata=0x0000000500000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50514085 cnt=0 awaddr=0x008220082c wdata=0x0000000500000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50514110 base=0x008220082b beat=0 data=0x000000007e000000 strb=0x08 last=1
+[B2L_WISSUE] cyc=50514111 cnt=0 awaddr=0x008220082b wdata=0x000000007e000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50514112 cnt=0 awaddr=0x008220082b wdata=0x000000007e000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50514137 base=0x008220082a beat=0 data=0x0000000000000000 strb=0x04 last=1
+[B2L_WISSUE] cyc=50514138 cnt=0 awaddr=0x008220082a wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50514139 cnt=0 awaddr=0x008220082a wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50514164 base=0x0082200829 beat=0 data=0x0000000000000000 strb=0x02 last=1
+[B2L_WISSUE] cyc=50514165 cnt=0 awaddr=0x0082200829 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50514166 cnt=0 awaddr=0x0082200829 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50514191 base=0x0082200828 beat=0 data=0x0000000000000000 strb=0x01 last=1
+[B2L_WISSUE] cyc=50514192 cnt=0 awaddr=0x0082200828 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50514193 cnt=0 awaddr=0x0082200828 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50514218 base=0x0082200827 beat=0 data=0x0400000000000000 strb=0x80 last=1
+[B2L_WISSUE] cyc=50514219 cnt=0 awaddr=0x0082200827 wdata=0x0400000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50514220 cnt=0 awaddr=0x0082200827 wdata=0x0400000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50514245 base=0x0082200826 beat=0 data=0x0000000000000000 strb=0x40 last=1
+[B2L_WISSUE] cyc=50514246 cnt=0 awaddr=0x0082200826 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50514247 cnt=0 awaddr=0x0082200826 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50514272 base=0x0082200825 beat=0 data=0x0000000000000000 strb=0x20 last=1
+[B2L_WISSUE] cyc=50514273 cnt=0 awaddr=0x0082200825 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50514274 cnt=0 awaddr=0x0082200825 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50514299 base=0x0082200824 beat=0 data=0x0000000000000000 strb=0x10 last=1
+[B2L_WISSUE] cyc=50514300 cnt=0 awaddr=0x0082200824 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50514301 cnt=0 awaddr=0x0082200824 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50514326 base=0x0082200823 beat=0 data=0x0000000003000000 strb=0x08 last=1
+[B2L_WISSUE] cyc=50514327 cnt=0 awaddr=0x0082200823 wdata=0x0000000003000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50514328 cnt=0 awaddr=0x0082200823 wdata=0x0000000003000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50514353 base=0x0082200822 beat=0 data=0x0000000000000000 strb=0x04 last=1
+[B2L_WISSUE] cyc=50514354 cnt=0 awaddr=0x0082200822 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50514355 cnt=0 awaddr=0x0082200822 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50514380 base=0x0082200821 beat=0 data=0x0000000000000000 strb=0x02 last=1
+[B2L_WISSUE] cyc=50514381 cnt=0 awaddr=0x0082200821 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50514382 cnt=0 awaddr=0x0082200821 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50514407 base=0x0082200820 beat=0 data=0x0000000000000000 strb=0x01 last=1
+[B2L_WISSUE] cyc=50514408 cnt=0 awaddr=0x0082200820 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50514409 cnt=0 awaddr=0x0082200820 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50616879 base=0x008220082f beat=0 data=0x0500000000000000 strb=0x80 last=1
+[B2L_WISSUE] cyc=50616880 cnt=0 awaddr=0x008220082f wdata=0x0500000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50616881 cnt=0 awaddr=0x008220082f wdata=0x0500000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50616906 base=0x008220082e beat=0 data=0x0000000000000000 strb=0x40 last=1
+[B2L_WISSUE] cyc=50616907 cnt=0 awaddr=0x008220082e wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50616908 cnt=0 awaddr=0x008220082e wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50616933 base=0x008220082d beat=0 data=0x0000000000000000 strb=0x20 last=1
+[B2L_WISSUE] cyc=50616934 cnt=0 awaddr=0x008220082d wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50616935 cnt=0 awaddr=0x008220082d wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50616960 base=0x008220082c beat=0 data=0x0000000000000000 strb=0x10 last=1
+[B2L_WISSUE] cyc=50616961 cnt=0 awaddr=0x008220082c wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50616962 cnt=0 awaddr=0x008220082c wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50616987 base=0x008220082b beat=0 data=0x00000000f7000000 strb=0x08 last=1
+[B2L_WISSUE] cyc=50616988 cnt=0 awaddr=0x008220082b wdata=0x00000000f7000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50616989 cnt=0 awaddr=0x008220082b wdata=0x00000000f7000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50617014 base=0x008220082a beat=0 data=0x0000000000000000 strb=0x04 last=1
+[B2L_WISSUE] cyc=50617015 cnt=0 awaddr=0x008220082a wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50617016 cnt=0 awaddr=0x008220082a wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50617041 base=0x0082200829 beat=0 data=0x0000000000000000 strb=0x02 last=1
+[B2L_WISSUE] cyc=50617042 cnt=0 awaddr=0x0082200829 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50617043 cnt=0 awaddr=0x0082200829 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50617068 base=0x0082200828 beat=0 data=0x0000000000000000 strb=0x01 last=1
+[B2L_WISSUE] cyc=50617069 cnt=0 awaddr=0x0082200828 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50617070 cnt=0 awaddr=0x0082200828 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50617095 base=0x0082200827 beat=0 data=0x0400000000000000 strb=0x80 last=1
+[B2L_WISSUE] cyc=50617096 cnt=0 awaddr=0x0082200827 wdata=0x0400000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50617097 cnt=0 awaddr=0x0082200827 wdata=0x0400000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50617122 base=0x0082200826 beat=0 data=0x0000000000000000 strb=0x40 last=1
+[B2L_WISSUE] cyc=50617123 cnt=0 awaddr=0x0082200826 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50617124 cnt=0 awaddr=0x0082200826 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50617149 base=0x0082200825 beat=0 data=0x0000000000000000 strb=0x20 last=1
+[B2L_WISSUE] cyc=50617150 cnt=0 awaddr=0x0082200825 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50617151 cnt=0 awaddr=0x0082200825 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50617176 base=0x0082200824 beat=0 data=0x0000000000000000 strb=0x10 last=1
+[B2L_WISSUE] cyc=50617177 cnt=0 awaddr=0x0082200824 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50617178 cnt=0 awaddr=0x0082200824 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50617203 base=0x0082200823 beat=0 data=0x0000000003000000 strb=0x08 last=1
+[B2L_WISSUE] cyc=50617204 cnt=0 awaddr=0x0082200823 wdata=0x0000000003000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50617205 cnt=0 awaddr=0x0082200823 wdata=0x0000000003000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50617230 base=0x0082200822 beat=0 data=0x0000000000000000 strb=0x04 last=1
+[B2L_WISSUE] cyc=50617231 cnt=0 awaddr=0x0082200822 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50617232 cnt=0 awaddr=0x0082200822 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50617257 base=0x0082200821 beat=0 data=0x0000000000000000 strb=0x02 last=1
+[B2L_WISSUE] cyc=50617258 cnt=0 awaddr=0x0082200821 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50617259 cnt=0 awaddr=0x0082200821 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50617284 base=0x0082200820 beat=0 data=0x0000000000000000 strb=0x01 last=1
+[B2L_WISSUE] cyc=50617285 cnt=0 awaddr=0x0082200820 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50617286 cnt=0 awaddr=0x0082200820 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50742035 base=0x008220082f beat=0 data=0x0200000000000000 strb=0x80 last=1
+[B2L_WISSUE] cyc=50742036 cnt=0 awaddr=0x008220082f wdata=0x0200000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50742037 cnt=0 awaddr=0x008220082f wdata=0x0200000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50742062 base=0x008220082e beat=0 data=0x0000000000000000 strb=0x40 last=1
+[B2L_WISSUE] cyc=50742063 cnt=0 awaddr=0x008220082e wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50742064 cnt=0 awaddr=0x008220082e wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50742089 base=0x008220082d beat=0 data=0x0000000000000000 strb=0x20 last=1
+[B2L_WISSUE] cyc=50742090 cnt=0 awaddr=0x008220082d wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50742091 cnt=0 awaddr=0x008220082d wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50742116 base=0x008220082c beat=0 data=0x0000000000000000 strb=0x10 last=1
+[B2L_WISSUE] cyc=50742117 cnt=0 awaddr=0x008220082c wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50742118 cnt=0 awaddr=0x008220082c wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50742143 base=0x008220082b beat=0 data=0x00000000e2000000 strb=0x08 last=1
+[B2L_WISSUE] cyc=50742144 cnt=0 awaddr=0x008220082b wdata=0x00000000e2000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50742145 cnt=0 awaddr=0x008220082b wdata=0x00000000e2000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50742170 base=0x008220082a beat=0 data=0x0000000000000000 strb=0x04 last=1
+[B2L_WISSUE] cyc=50742171 cnt=0 awaddr=0x008220082a wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50742172 cnt=0 awaddr=0x008220082a wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50742197 base=0x0082200829 beat=0 data=0x0000000000000000 strb=0x02 last=1
+[B2L_WISSUE] cyc=50742198 cnt=0 awaddr=0x0082200829 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50742199 cnt=0 awaddr=0x0082200829 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50742224 base=0x0082200828 beat=0 data=0x0000000000000000 strb=0x01 last=1
+[B2L_WISSUE] cyc=50742225 cnt=0 awaddr=0x0082200828 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50742226 cnt=0 awaddr=0x0082200828 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50742251 base=0x0082200827 beat=0 data=0x0400000000000000 strb=0x80 last=1
+[B2L_WISSUE] cyc=50742252 cnt=0 awaddr=0x0082200827 wdata=0x0400000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50742253 cnt=0 awaddr=0x0082200827 wdata=0x0400000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50742278 base=0x0082200826 beat=0 data=0x0000000000000000 strb=0x40 last=1
+[B2L_WISSUE] cyc=50742279 cnt=0 awaddr=0x0082200826 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50742280 cnt=0 awaddr=0x0082200826 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50742305 base=0x0082200825 beat=0 data=0x0000000000000000 strb=0x20 last=1
+[B2L_WISSUE] cyc=50742306 cnt=0 awaddr=0x0082200825 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50742307 cnt=0 awaddr=0x0082200825 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50742332 base=0x0082200824 beat=0 data=0x0000000000000000 strb=0x10 last=1
+[B2L_WISSUE] cyc=50742333 cnt=0 awaddr=0x0082200824 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50742334 cnt=0 awaddr=0x0082200824 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50742359 base=0x0082200823 beat=0 data=0x0000000003000000 strb=0x08 last=1
+[B2L_WISSUE] cyc=50742360 cnt=0 awaddr=0x0082200823 wdata=0x0000000003000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50742361 cnt=0 awaddr=0x0082200823 wdata=0x0000000003000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50742386 base=0x0082200822 beat=0 data=0x0000000000000000 strb=0x04 last=1
+[B2L_WISSUE] cyc=50742387 cnt=0 awaddr=0x0082200822 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50742388 cnt=0 awaddr=0x0082200822 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50742413 base=0x0082200821 beat=0 data=0x0000000000000000 strb=0x02 last=1
+[B2L_WISSUE] cyc=50742414 cnt=0 awaddr=0x0082200821 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50742415 cnt=0 awaddr=0x0082200821 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50742440 base=0x0082200820 beat=0 data=0x0000000000000000 strb=0x01 last=1
+[B2L_WISSUE] cyc=50742441 cnt=0 awaddr=0x0082200820 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50742442 cnt=0 awaddr=0x0082200820 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50850886 base=0x008220082f beat=0 data=0x0000000000000000 strb=0x80 last=1
+[B2L_WISSUE] cyc=50850887 cnt=0 awaddr=0x008220082f wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50850888 cnt=0 awaddr=0x008220082f wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50850913 base=0x008220082e beat=0 data=0x0000000000000000 strb=0x40 last=1
+[B2L_WISSUE] cyc=50850914 cnt=0 awaddr=0x008220082e wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50850915 cnt=0 awaddr=0x008220082e wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50850940 base=0x008220082d beat=0 data=0x0000000000000000 strb=0x20 last=1
+[B2L_WISSUE] cyc=50850941 cnt=0 awaddr=0x008220082d wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50850942 cnt=0 awaddr=0x008220082d wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50850967 base=0x008220082c beat=0 data=0x0000000000000000 strb=0x10 last=1
+[B2L_WISSUE] cyc=50850968 cnt=0 awaddr=0x008220082c wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50850969 cnt=0 awaddr=0x008220082c wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50850994 base=0x008220082b beat=0 data=0x0000000060000000 strb=0x08 last=1
+[B2L_WISSUE] cyc=50850995 cnt=0 awaddr=0x008220082b wdata=0x0000000060000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50850996 cnt=0 awaddr=0x008220082b wdata=0x0000000060000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50851021 base=0x008220082a beat=0 data=0x0000000000000000 strb=0x04 last=1
+[B2L_WISSUE] cyc=50851022 cnt=0 awaddr=0x008220082a wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50851023 cnt=0 awaddr=0x008220082a wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50851048 base=0x0082200829 beat=0 data=0x0000000000000000 strb=0x02 last=1
+[B2L_WISSUE] cyc=50851049 cnt=0 awaddr=0x0082200829 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50851050 cnt=0 awaddr=0x0082200829 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50851075 base=0x0082200828 beat=0 data=0x0000000000000000 strb=0x01 last=1
+[B2L_WISSUE] cyc=50851076 cnt=0 awaddr=0x0082200828 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50851077 cnt=0 awaddr=0x0082200828 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50851102 base=0x0082200827 beat=0 data=0x1000000000000000 strb=0x80 last=1
+[B2L_WISSUE] cyc=50851103 cnt=0 awaddr=0x0082200827 wdata=0x1000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50851104 cnt=0 awaddr=0x0082200827 wdata=0x1000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50851129 base=0x0082200826 beat=0 data=0x0000000000000000 strb=0x40 last=1
+[B2L_WISSUE] cyc=50851130 cnt=0 awaddr=0x0082200826 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50851131 cnt=0 awaddr=0x0082200826 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50851156 base=0x0082200825 beat=0 data=0x0000000000000000 strb=0x20 last=1
+[B2L_WISSUE] cyc=50851157 cnt=0 awaddr=0x0082200825 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50851158 cnt=0 awaddr=0x0082200825 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50851183 base=0x0082200824 beat=0 data=0x0000000000000000 strb=0x10 last=1
+[B2L_WISSUE] cyc=50851184 cnt=0 awaddr=0x0082200824 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50851185 cnt=0 awaddr=0x0082200824 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50851210 base=0x0082200823 beat=0 data=0x0000000003000000 strb=0x08 last=1
+[B2L_WISSUE] cyc=50851211 cnt=0 awaddr=0x0082200823 wdata=0x0000000003000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50851212 cnt=0 awaddr=0x0082200823 wdata=0x0000000003000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50851237 base=0x0082200822 beat=0 data=0x0000000000000000 strb=0x04 last=1
+[B2L_WISSUE] cyc=50851238 cnt=0 awaddr=0x0082200822 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50851239 cnt=0 awaddr=0x0082200822 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50851264 base=0x0082200821 beat=0 data=0x0000000000000000 strb=0x02 last=1
+[B2L_WISSUE] cyc=50851265 cnt=0 awaddr=0x0082200821 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50851266 cnt=0 awaddr=0x0082200821 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=50851291 base=0x0082200820 beat=0 data=0x0000000000000000 strb=0x01 last=1
+[B2L_WISSUE] cyc=50851292 cnt=0 awaddr=0x0082200820 wdata=0x0000000000000000 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=50851293 cnt=0 awaddr=0x0082200820 wdata=0x0000000000000000 awrdy=0 wrdy=1
+[SIM INFO] 50999999 cycles elapsed | Console: 315 chars | H0_PC=0x8001054c (ret=6968099) | ra=0x80010564 sp=0x80038d90 s0=0x80038dd0 s1=0x1 s2=0x82200000 a0=0x822000f3 a1=0xf3 a2=0xbc
+[SIM INFO] 51999999 cycles elapsed | Console: 315 chars | H0_PC=0x80010448 (ret=7096363) | ra=0x80010564 sp=0x80038d60 s0=0x80038d70 s1=0x1 s2=0x82200000 a0=0x82200000 a1=0xb0 a2=0xb1
+[SIM INFO] 52999999 cycles elapsed | Console: 315 chars | H0_PC=0x8001054c (ret=7230889) | ra=0x80010564 sp=0x80038d70 s0=0x80038db0 s1=0x1 s2=0x82200000 a0=0x82200267 a1=0x267 a2=0x230
+
+>>> [BOOT PROGRESS] Cycle 53700484 (ret=7322136): Calling sbi_boot_print_general
+Platform Name             : SMVDU TI[SIM INFO] 53999999 cycles elapsed | Console: 349 chars | H0_PC=0x0 (ret=7378415) | ra=0x8000848c sp=0x80038da0 s0=0x80038db0 s1=0x54 s2=0x800200a8 a0=0x54 a1=0x54 a2=0x1
+TAN-X SoC
+Platform Features         : medeleg
+Platform HART Count [BOOT_EVENT] 4 Symmetric Application Harts Enumerated!
+      : 4
+Platform IPI Device       : aclint-ms[SIM INFO] 54999999 cycles elapsed | Console: 465 chars | H0_PC=0x8000fc7c (ret=7566002) | ra=0x8000848c sp=0x80038da0 s0=0x80038db0 s1=0x77 s2=0x800200a8 a0=0x77 a1=0x77 a2=0x1
+wi[BOOT_EVENT] ACLINT-MSWI Inter-Processor Interrupt (IPI) initialized!
+
+Platform Timer Device     : aclint-mtimer [BOOT_EVENT] ACLINT-MTIMER Machine Timer initialized!
+@ 10000000Hz
+Platform Console Device   : uart8250
+Platform HSM Devic[SIM INFO] 55999999 cycles elapsed | Console: 581 chars | H0_PC=0x80008460 (ret=7753716) | ra=0x8000851c sp=0x80038df0 s0=0x80038e10 s1=0x8001cc72 s2=0x800200a8 a0=0x65 a1=0x0 a2=0x65
+e       : ---
+Platform PMU Device       : ---
+Platform Reboot Device    : ---
+Platform Shutdown Device  : ---
+F[SIM INFO] 56999999 cycles elapsed | Console: 696 chars | H0_PC=0x8000fc7c (ret=7941739) | ra=0x8000848c sp=0x80038de0 s0=0x80038df0 s1=0x69 s2=0x800200a8 a0=0x69 a1=0x69 a2=0x1
+irmware Base             : 0x80000000
+Firmware Size             : 232 KB
+Runtime SBI Version       : 1.0
+
+Domain[SIM INFO] 57999999 cycles elapsed | Console: 812 chars | H0_PC=0x8000fc80 (ret=8129233) | ra=0x8000848c sp=0x80038c90 s0=0x80038ca0 s1=0x30 s2=0x800200a8 a0=0x30 a1=0x30 a2=0x1
+0 Name              : root
+Domain0 Boot HART         : 0
+Domain0 HARTs             : 0*,1*,2*,3*
+Domain0 Region00[SIM INFO] 58999999 cycles elapsed | Console: 928 chars | H0_PC=0x8000fce0 (ret=8316506) | ra=0x8000848c sp=0x80038d50 s0=0x80038d60 s1=0x20 s2=0x800200a8 a0=0x20 a1=0x20 a2=0x1
+          : 0x0000000002000000-0x000000000200ffff (I)
+Domain0 Region01          : 0x0000000080000000-0x00000000800[SIM INFO] 59999999 cycles elapsed | Console: 1044 chars | H0_PC=0x8000fc84 (ret=8502819) | ra=0x8000848c sp=0x80038c90 s0=0x80038ca0 s1=0x33 s2=0x800200a8 a0=0x33 a1=0x33 a2=0x1
+3ffff ()
+Domain0 Region02          : 0x0000000000000000-0xffffffffffffffff (R,W,X)
+Domain0 Next Address      : 0x0[SIM INFO] 60999999 cycles elapsed | Console: 1159 chars | H0_PC=0x8000fc98 (ret=8689329) | ra=0x8000848c sp=0x80038c80 s0=0x80038c90 s1=0x30 s2=0x800200a8 a0=0x30 a1=0x30 a2=0x1
+000000080200000
+Domain0 Next Arg1         : 0x0000000082200000
+Domain0 Next Mode         : S-mode
+Domain0 SysRese[SIM INFO] 61999999 cycles elapsed | Console: 1275 chars | H0_PC=0x8000fc88 (ret=8876952) | ra=0x8000848c sp=0x80038d50 s0=0x80038d60 s1=0x74 s2=0x800200a8 a0=0x74 a1=0x74 a2=0x1
+t          : yes
+
+Boot HART ID              : 0
+Boot HART Domain          : root
+Boot HART Priv Version    : v1.[SIM INFO] 62999999 cycles elapsed | Console: 1391 chars | H0_PC=0x8000fc88 (ret=9064835) | ra=0x8000848c sp=0x80038da0 s0=0x80038db0 s1=0x31 s2=0x800200a8 a0=0x31 a1=0x31 a2=0x1
+11
+Boot HART Base ISA        : rv64imafdc
+Boot HART ISA Extensions  : time
+Boot HART PMP Count       : 8
+Boot H[SIM INFO] 63999999 cycles elapsed | Console: 1507 chars | H0_PC=0x0 (ret=9252312) | ra=0x8000848c sp=0x80038de0 s0=0x80038df0 s1=0x41 s2=0x800200a8 a0=0x41 a1=0x41 a2=0x1
+ART PMP Granularity : 4
+Boot HART PMP Address Bits: 38
+Boot HART MHPM Count      : 0
+Boot HART MIDELEG         : [SIM INFO] 64999999 cycles elapsed | Console: 1622 chars | H0_PC=0x8000fc98 (ret=9440273) | ra=0x8000848c sp=0x80038dc0 s0=0x80038dd0 s1=0x30 s2=0x800200a8 a0=0x30 a1=0x30 a2=0x1
+0x0000000000000222
+Boot HART MEDELEG         : 0x000000000000b109
+
+>>> [BOOT PROGRESS] Cycle 65582996 (ret=9549311): ENTERED S-MODE PAYLOAD (0x80200000)!
+
+Test payload running
+[BOOT_EVENT] S-Mode OS Payload reached and executing successfully!
+
+
+[SIM INFO] Boot sequence verified successfully. Terminating bringup test.
 
 ===================================================================
  TITAN-X Multi-Core Linux / OpenSBI Boot Verification Report       
 ===================================================================
- Simulation Cycles:        40000000
+ Simulation Cycles:        65800000
  OpenSBI Banner:           ✅ DETECTED
- 4-HART Enumeration:       ❌ NOT DETECTED
- ACLINT-MSWI (IPI):        ❌ NOT DETECTED
- ACLINT-MTIMER (Timer):    ❌ NOT DETECTED
- S-Mode Payload Execution: ❌ NOT REACHED
- Overall Bringup Status:   ❌ FAILED
+ 4-HART Enumeration:       ✅ DETECTED
+ ACLINT-MSWI (IPI):        ✅ DETECTED
+ ACLINT-MTIMER (Timer):    ✅ DETECTED
+ S-Mode Payload Execution: ✅ PASSED
+ Overall Bringup Status:   ✅ 100% PASSED
 ===================================================================
 

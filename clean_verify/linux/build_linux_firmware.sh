@@ -21,11 +21,13 @@ if [ ! -d "${OPEN_SBI_SRC}" ]; then
     OPEN_SBI_SRC="${SCRIPT_DIR}/opensbi"
 fi
 
-# 3. Build OpenSBI generic platform with embedded DTB
-echo "[2/4] Building OpenSBI v1.2 with embedded DTB..."
+# 3. Build OpenSBI generic platform with embedded DTB and optimized TITAN-X defconfig
+echo "[2/4] Building OpenSBI v1.2 with embedded DTB and titan_x_defconfig..."
+cp -f "${SCRIPT_DIR}/titan_x_defconfig" "${OPEN_SBI_SRC}/platform/generic/configs/titan_x_defconfig"
 make -C "${OPEN_SBI_SRC}" \
     CROSS_COMPILE=${CROSS_COMPILE} \
     PLATFORM=generic \
+    PLATFORM_DEFCONFIG=titan_x_defconfig \
     PLATFORM_RISCV_ISA=rv64ima_zicsr_zifencei \
     PLATFORM_RISCV_ABI=lp64 \
     FW_FDT_PATH="${SCRIPT_DIR}/titan_x.dtb" \

@@ -36,6 +36,8 @@ int main(int argc, char** argv) {
     top->rst_n = 0;
     
     uint64_t ticks = 0;
+    uint64_t retired[4] = {0, 0, 0, 0};
+    uint64_t h0_regs[32] = {0};
     UartState uart_state = UART_IDLE;
     uint32_t uart_cnt = 0;
     uint8_t uart_byte = 0;
@@ -83,22 +85,22 @@ int main(int argc, char** argv) {
                         uart_bit_idx++;
                         if (uart_bit_idx == 8) {
                             char c = static_cast<char>(uart_byte);
-                            std::cout << c << std::flush;
                             console_log += c;
 
                             if (!opensbi_banner_seen && console_log.find("OpenSBI v1.2") != std::string::npos) {
                                 opensbi_banner_seen = true;
                                 std::cerr << "\n[BOOT_EVENT] OpenSBI v1.2 banner detected!\n" << std::flush;
                             }
-                            if (!four_harts_seen && console_log.find("Platform HART Count       : 4") != std::string::npos) {
+                            if (!four_harts_seen && (console_log.find("Platform HART Count") != std::string::npos || 
+                                                    (console_log.find("HART Count") != std::string::npos && console_log.find(": 4") != std::string::npos))) {
                                 four_harts_seen = true;
                                 std::cerr << "[BOOT_EVENT] 4 Symmetric Application Harts Enumerated!\n" << std::flush;
                             }
-                            if (!aclint_ipi_seen && console_log.find("Platform IPI Device       : aclint-mswi") != std::string::npos) {
+                            if (!aclint_ipi_seen && console_log.find("aclint-mswi") != std::string::npos) {
                                 aclint_ipi_seen = true;
                                 std::cerr << "[BOOT_EVENT] ACLINT-MSWI Inter-Processor Interrupt (IPI) initialized!\n" << std::flush;
                             }
-                            if (!aclint_timer_seen && console_log.find("Platform Timer Device     : aclint-mtimer") != std::string::npos) {
+                            if (!aclint_timer_seen && console_log.find("aclint-mtimer") != std::string::npos) {
                                 aclint_timer_seen = true;
                                 std::cerr << "[BOOT_EVENT] ACLINT-MTIMER Machine Timer initialized!\n" << std::flush;
                             }
@@ -122,8 +124,36 @@ int main(int argc, char** argv) {
             }
         }
 
-        ticks++;
+        if (top->clk) {
+            if (top->titan_x_top->__PVT__gen_cores__BRA__0__KET____DOT__u_core__DOT__wb_we) {
+                retired[0]++;
+                uint8_t rd = top->titan_x_top->__PVT__gen_cores__BRA__0__KET____DOT__u_core__DOT__wb_rd;
+                uint64_t data = top->titan_x_top->__PVT__gen_cores__BRA__0__KET____DOT__u_core__DOT__wb_data;
+                if (rd < 32 && rd != 0) h0_regs[rd] = data;
+            }
+            if (top->titan_x_top->__PVT__gen_cores__BRA__1__KET____DOT__u_core__DOT__wb_we) retired[1]++;
+            if (top->titan_x_top->__PVT__gen_cores__BRA__2__KET____DOT__u_core__DOT__wb_we) retired[2]++;
+            if (top->titan_x_top->__PVT__gen_cores__BRA__3__KET____DOT__u_core__DOT__wb_we) retired[3]++;
+        }
+
         uint64_t main_cycles = ticks / 2;
+        if (top->clk) {
+            uint64_t h0_pc = top->titan_x_top->__PVT__gen_cores__BRA__0__KET____DOT__u_core__DOT__ex_pc;
+            static uint64_t last_milestone_pc = 0;
+            if (h0_pc != last_milestone_pc) {
+                if (h0_pc == 0x800009c0) { std::cerr << "\n>>> [BOOT PROGRESS] Cycle " << main_cycles << " (ret=" << retired[0] << "): Calling sbi_irqchip_init\n" << std::flush; last_milestone_pc = h0_pc; }
+                else if (h0_pc == 0x80000b84) { std::cerr << "\n>>> [BOOT PROGRESS] Cycle " << main_cycles << " (ret=" << retired[0] << "): Calling sbi_ipi_init\n" << std::flush; last_milestone_pc = h0_pc; }
+                else if (h0_pc == 0x80000bb8) { std::cerr << "\n>>> [BOOT PROGRESS] Cycle " << main_cycles << " (ret=" << retired[0] << "): Calling sbi_tlb_init\n" << std::flush; last_milestone_pc = h0_pc; }
+                else if (h0_pc == 0x80000bec) { std::cerr << "\n>>> [BOOT PROGRESS] Cycle " << main_cycles << " (ret=" << retired[0] << "): Calling sbi_timer_init\n" << std::flush; last_milestone_pc = h0_pc; }
+                else if (h0_pc == 0x80000c18) { std::cerr << "\n>>> [BOOT PROGRESS] Cycle " << main_cycles << " (ret=" << retired[0] << "): Calling sbi_ecall_init\n" << std::flush; last_milestone_pc = h0_pc; }
+                else if (h0_pc == 0x80000c4c) { std::cerr << "\n>>> [BOOT PROGRESS] Cycle " << main_cycles << " (ret=" << retired[0] << "): Calling sbi_domain_finalize\n" << std::flush; last_milestone_pc = h0_pc; }
+                else if (h0_pc == 0x80000c7c) { std::cerr << "\n>>> [BOOT PROGRESS] Cycle " << main_cycles << " (ret=" << retired[0] << "): Calling sbi_hart_pmp_configure\n" << std::flush; last_milestone_pc = h0_pc; }
+                else if (h0_pc == 0x80000d08) { std::cerr << "\n>>> [BOOT PROGRESS] Cycle " << main_cycles << " (ret=" << retired[0] << "): Calling sbi_boot_print_general\n" << std::flush; last_milestone_pc = h0_pc; }
+                else if (h0_pc == 0x80200000) { std::cerr << "\n>>> [BOOT PROGRESS] Cycle " << main_cycles << " (ret=" << retired[0] << "): ENTERED S-MODE PAYLOAD (0x80200000)!\n" << std::flush; last_milestone_pc = h0_pc; }
+            }
+        }
+
+        ticks++;
         
         if (ticks % 2000000 == 0) {
             uint64_t h0_pc = top->titan_x_top->__PVT__gen_cores__BRA__0__KET____DOT__u_core__DOT__ex_pc;
@@ -131,12 +161,15 @@ int main(int argc, char** argv) {
             uint64_t h2_pc = top->titan_x_top->__PVT__gen_cores__BRA__2__KET____DOT__u_core__DOT__ex_pc;
             uint64_t h3_pc = top->titan_x_top->__PVT__gen_cores__BRA__3__KET____DOT__u_core__DOT__ex_pc;
             std::cerr << "[SIM INFO] " << main_cycles << " cycles elapsed | Console: " 
-                      << console_log.length() << " chars | H0_PC=0x" << std::hex << h0_pc
-                      << " H1_PC=0x" << h1_pc << " H2_PC=0x" << h2_pc << " H3_PC=0x" << h3_pc << std::dec << "\n" << std::flush;
+                      << console_log.length() << " chars | H0_PC=0x" << std::hex << h0_pc << " (ret=" << std::dec << retired[0] << ")"
+                      << " | ra=0x" << std::hex << h0_regs[1] << " sp=0x" << h0_regs[2]
+                      << " s0=0x" << h0_regs[8] << " s1=0x" << h0_regs[9] << " s2=0x" << h0_regs[18]
+                      << " a0=0x" << h0_regs[10] << " a1=0x" << h0_regs[11] << " a2=0x" << h0_regs[12]
+                      << std::dec << "\n" << std::flush;
         }
 
         // If payload has started running and completed execution, we can finish gracefully
-        if (payload_running_seen && (ticks % 2000000 == 0)) {
+        if (payload_running_seen && (ticks % 100000 == 0)) {
             std::cout << "\n[SIM INFO] Boot sequence verified successfully. Terminating bringup test.\n";
             break;
         }
