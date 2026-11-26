@@ -1,0 +1,20 @@
+=====================================================================================
+ SMVDU TITAN-X Clean-Room Verification: Comprehensive Code & Functional Coverage
+=====================================================================================
+Subsystem / Module Area                |  Found Lines |  Hit Lines |   Coverage
+-------------------------------------------------------------------------------------
+Core Top & Pipeline                    |         1422 |       1078 |     75.81%
+Memory Management & Protection         |          169 |         96 |     56.80%
+Hardware Floating-Point (FPU)          |          354 |        299 |     84.46%
+RV Security Monitor Core               |          141 |        116 |     82.27%
+L1 & L2 Cache Coherence (MESI)         |          813 |        595 |     73.19%
+AXI4 Interconnect & QoS                |          509 |        401 |     78.78%
+Memory Subsystem & Controllers         |          415 |        329 |     79.28%
+Hardware Cryptographic Engines         |         1507 |       1200 |     79.63%
+Video Subsystem                        |          277 |        240 |     86.64%
+High-Speed I/O                         |          464 |        402 |     86.64%
+Low-Speed Peripherals & System         |          620 |        486 |     78.39%
+Top-Level SoC Integration              |          189 |         66 |     34.92%
+=====================================================================================
+OVERALL TITAN-X SOC AGGREGATE          |         6880 |       5308 |     77.15%
+=====================================================================================

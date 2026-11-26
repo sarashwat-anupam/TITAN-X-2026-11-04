@@ -1,0 +1,125 @@
+//      // verilator_coverage annotation
+        // SPDX-License-Identifier: Apache-2.0
+        // SMVDU-TITAN-X SoC — OTP eFuse Controller Model (Hardware Trust Anchor)
+        // Manages 4 Root-of-Trust Public Key slots, key revocation fuses, and monotonic anti-rollback counter.
+        `timescale 1ns/1ps
+        
+        module efuse_ctrl #(
+            parameter APB_ADDR_WIDTH = 32,
+            parameter APB_DATA_WIDTH = 32
+        ) (
+            input  wire                      clk,
+            input  wire                      rst_n,
+        
+            // APB Slave Interface (Telemetry, Programming, Diagnostics)
+            input  wire [APB_ADDR_WIDTH-1:0] paddr,
+            input  wire                      psel,
+            input  wire                      penable,
+            input  wire                      pwrite,
+            input  wire [APB_DATA_WIDTH-1:0] pwdata,
+            output reg  [APB_DATA_WIDTH-1:0] prdata,
+            output wire                      pready,
+            output wire                      pslverr,
+        
+            // Dedicated Direct Interface to Secure Boot Engine
+            input  wire [1:0]                hw_slot_idx,
+            output wire [255:0]              hw_rot_qx,
+            output wire [255:0]              hw_rot_qy,
+            output wire                      hw_slot_revoked,
+            output wire [3:0]                hw_revocation_mask,
+            output wire [31:0]               hw_security_counter,
+            input  wire [31:0]               hw_update_counter_val,
+            input  wire                      hw_update_counter_en
+        );
+        
+            assign pready  = 1'b1;
+            assign pslverr = 1'b0;
+        
+            // -------------------------------------------------------
+            // Root Public Key Slots (Provisioned at Silicon Manufacture)
+            // -------------------------------------------------------
+            // Slot 0: Primary Production Root Key (NIST P-256)
+            localparam [255:0] ROT_PUBKEY_QX_0 = 256'h26F4FA43_1A2BEB66_46D953CA_332BC722_911D9B05_E5D92476_06330B61_E6703F52;
+            localparam [255:0] ROT_PUBKEY_QY_0 = 256'h9E9689C9_49B37A0B_342F6CAC_9B4E5440_A727CEE4_055285CD_A6216084_643D6E4F;
+        
+            // Slot 1: Secondary Root Key
+            localparam [255:0] ROT_PUBKEY_QX_1 = 256'h5A86B737_E13F9826_1A2BEB66_46D953CA_332BC722_911D9B05_E5D92476_06330B61;
+            localparam [255:0] ROT_PUBKEY_QY_1 = 256'h67332611_794461E8_49B37A0B_342F6CAC_9B4E5440_A727CEE4_055285CD_A6216084;
+        
+            // Slot 2: Engineering / Backup Root Key (Authentic P-256 Curve Key)
+            localparam [255:0] ROT_PUBKEY_QX_2 = 256'hE94366F0_CB9A569D_BFDD0968_6BA13860_2E16E6F8_8574E021_52AB5641_DAB249E0;
+            localparam [255:0] ROT_PUBKEY_QY_2 = 256'h355A80A0_557E8666_9C1F245F_2C1E1C96_712654A1_209835FE_4CA480C1_88764172;
+        
+            // Slot 3: Emergency Recovery Root Key (Authentic P-256 Curve Key)
+            localparam [255:0] ROT_PUBKEY_QX_3 = 256'h22C260D8_6CD75617_3C0A0A5F_4D7F249C_0BF58183_CEF18CEE_1FE3FA6D_27E67E6A;
+            localparam [255:0] ROT_PUBKEY_QY_3 = 256'hA359316A_E77D1980_0AC1BD36_31284A20_6DBE7557_AC0AF37F_7F567BD2_D9430D61;
+        
+            // -------------------------------------------------------
+            // Non-Volatile OTP Registers (eFuse Behavioral Emulation)
+            // -------------------------------------------------------
+            reg [3:0]  revocation_fuses;   // 1 bit per slot: 1=REVOKED, 0=VALID
+            reg [31:0] monotonic_counter;  // Monotonic security version counter
+        
+            assign hw_revocation_mask  = revocation_fuses;
+            assign hw_slot_revoked     = revocation_fuses[hw_slot_idx];
+            assign hw_security_counter = monotonic_counter;
+        
+            // Slot MUX for Secure Boot
+            reg [255:0] qx_mux, qy_mux;
+ 000018     always @(*) begin
+ 000018         case (hw_slot_idx)
+ 780155             2'd0: begin qx_mux = ROT_PUBKEY_QX_0; qy_mux = ROT_PUBKEY_QY_0; end
+%000000             2'd1: begin qx_mux = ROT_PUBKEY_QX_1; qy_mux = ROT_PUBKEY_QY_1; end
+%000000             2'd2: begin qx_mux = ROT_PUBKEY_QX_2; qy_mux = ROT_PUBKEY_QY_2; end
+%000000             2'd3: begin qx_mux = ROT_PUBKEY_QX_3; qy_mux = ROT_PUBKEY_QY_3; end
+                endcase
+            end
+        
+            assign hw_rot_qx = qx_mux;
+            assign hw_rot_qy = qy_mux;
+        
+ 000018     initial begin
+ 000018         revocation_fuses  = 4'b0000;
+ 000018         monotonic_counter = 32'd0;
+            end
+        
+            // -------------------------------------------------------
+            // Register Updates: Monotonicity & One-Way OTP Fuses (Non-Volatile)
+            // -------------------------------------------------------
+ 780137     always @(posedge clk) begin
+                // Hardware Secure Boot updates take highest priority
+%000000         if (hw_update_counter_en) begin
+%000000             if (hw_update_counter_val > monotonic_counter)
+%000000                 monotonic_counter <= hw_update_counter_val;
+                end
+        
+                // APB Programming
+%000000         if (psel && penable && pwrite) begin
+%000000                 case (paddr[7:0])
+%000000                     8'h04: begin // Monotonic Counter Write (Only increases, anti-rollback)
+%000000                         if (pwdata > monotonic_counter)
+%000000                             monotonic_counter <= pwdata;
+                            end
+%000000                     8'h08: begin // Revocation Fuse Write (OTP OR logic: once 1, never 0)
+%000000                         revocation_fuses <= revocation_fuses | pwdata[3:0];
+                            end
+%000000                     default: ;
+                        endcase
+                    end
+                end
+        
+            // -------------------------------------------------------
+            // APB Read Telemetry
+            // -------------------------------------------------------
+ 000018     always @(*) begin
+ 000018         case (paddr[7:0])
+ 676903             8'h00: prdata = {24'h0, 4'h0, revocation_fuses};
+ 092543             8'h04: prdata = monotonic_counter;
+ 006887             8'h08: prdata = {28'h0, revocation_fuses};
+ 003822             8'h0C: prdata = {30'h0, hw_slot_idx};
+%000000             default: prdata = 32'h0;
+                endcase
+            end
+        
+        endmodule
+        

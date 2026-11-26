@@ -5,6 +5,9 @@
 
 #include <verilated.h>
 #include <verilated_fst_c.h>
+#if VM_COVERAGE
+#include <verilated_cov.h>
+#endif
 #include "Vtitan_x_top.h"
 #include "Vtitan_x_top___024root.h"
 #include "memory_model.hpp"
@@ -40,6 +43,7 @@ struct CommandLineArgs {
     uint64_t cosim_end_pc = 0;
     bool verbose = false;
     bool fast_boot = false;
+    std::string cov_file = "clean_verify/reports/coverage.dat";
 };
 
 void parse_args(int argc, char** argv, CommandLineArgs& args) {
@@ -65,6 +69,8 @@ void parse_args(int argc, char** argv, CommandLineArgs& args) {
             args.verbose = true;
         } else if (arg == "--fast-boot") {
             args.fast_boot = true;
+        } else if (arg == "--coverage-file" && i + 1 < argc) {
+            args.cov_file = argv[++i];
         }
     }
 }
@@ -668,6 +674,13 @@ int main(int argc, char** argv) {
         tfp->close();
     }
     top->final();
+
+#if VM_COVERAGE
+    if (!args.cov_file.empty()) {
+        VerilatedCov::write(args.cov_file.c_str());
+        std::cout << "[Coverage] Coverage database saved to: " << args.cov_file << std::endl;
+    }
+#endif
 
     if (!simulation_passed || simulation_failed || cosim.get_mismatches() > 0 || sec_bfm.get_violations() > 0 || video_bfm.get_violations() > 0 ||
         eth_bfm.get_violations() > 0 || usb_bfm.get_violations() > 0 || pcie_bfm.get_violations() > 0 || periph_bfm.get_violations() > 0) {

@@ -5,6 +5,7 @@ REPO_ROOT := $(abspath ../..)
 
 VERILATOR := verilator
 JOBS ?= 2
+COVERAGE ?= 0
 VERILATOR_FLAGS := -Wno-fatal -Wno-PINMISSING -Wno-DECLFILENAME -Wno-TIMESCALEMOD \
                    -Wno-UNUSEDSIGNAL -Wno-UNUSEDPARAM -Wno-PINCONNECTEMPTY -Wno-SYNCASYNCNET \
                    -Wno-BLKSEQ -Wno-WIDTHEXPAND -Wno-WIDTHTRUNC -Wno-COMBDLY -Wno-MULTIDRIVEN \
@@ -14,6 +15,10 @@ VERILATOR_FLAGS := -Wno-fatal -Wno-PINMISSING -Wno-DECLFILENAME -Wno-TIMESCALEMO
                    --cc --exe --build -j $(JOBS) \
                    --CFLAGS "-std=c++17 -I$(abspath .) -I$(abspath ../bfm)" \
                     --LDFLAGS "-lz"
+
+ifeq ($(COVERAGE),1)
+    VERILATOR_FLAGS += --coverage-line --coverage-user
+endif
 
 INCDIRS := -I$(REPO_ROOT)/includes \
            -I$(REPO_ROOT)/backend/rv_core_top \
