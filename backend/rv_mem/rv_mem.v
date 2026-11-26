@@ -1,0 +1,465 @@
+// SPDX-License-Identifier: Apache-2.0
+// SMVDU-TITAN-X SoC — RV64I Memory Access Stage with A-Extension (Atomics)
+`timescale 1ns/1ps
+`include "params.vh"
+`include "isa_pkg.vh"
+
+module rv_mem (
+    input  wire        clk,
+    input  wire        rst_n,
+    input  wire        flush,
+    // From execute
+    input  wire [63:0] alu_result,
+    input  wire [63:0] rs2_data,
+    input  wire [4:0]  rd_in,
+    input  wire [2:0]  funct3,
+    input  wire [6:0]  opcode,
+    input  wire        mem_read,
+    input  wire        mem_write,
+    input  wire        reg_write,
+    input  wire        is_amo,
+    input  wire [4:0]  amo_funct5,
+    input  wire        valid_in,
+    // Physical address from MMU and Page Fault inputs
+    input  wire [39:0] phys_addr,
+    input  wire        mmu_page_fault,
+    input  wire [63:0] mmu_fault_va,
+    input  wire        mmu_trans_busy,
+    input  wire        pmp_fault,
+    // Snoop invalidation interface from L2 coherence subsystem
+    input  wire        snoop_valid,
+    input  wire [39:0] snoop_addr,
+    input  wire [1:0]  snoop_type,
+    // Data memory AXI4-Lite master
+    output reg         dmem_awvalid,
+    input  wire        dmem_awready,
+    output reg  [39:0] dmem_awaddr,
+    output reg         dmem_wvalid,
+    input  wire        dmem_wready,
+    output reg  [63:0] dmem_wdata,
+    output reg  [7:0]  dmem_wstrb,
+    input  wire        dmem_bvalid,
+    output reg         dmem_bready,
+    output reg         dmem_arvalid,
+    input  wire        dmem_arready,
+    output reg  [39:0] dmem_araddr,
+    input  wire        dmem_rvalid,
+    output reg         dmem_rready,
+    input  wire [63:0] dmem_rdata,
+    input  wire [1:0]  dmem_rresp,
+    input  wire [63:0] pc_in,
+    input  wire [1:0]  dmem_bresp,
+    // To writeback
+    output reg  [63:0] result,
+    output reg  [4:0]  rd_out,
+    output reg         reg_write_out,
+    output reg         valid_out,
+    // Forwarding output
+    output wire [63:0] fwd_mem_data,
+    output wire [4:0]  fwd_mem_rd,
+    output wire        fwd_mem_valid,
+    // Fault reporting to core exception unit
+    output reg         mem_fault,
+    output reg  [63:0] mem_fault_pc,
+    output reg  [63:0] mem_fault_cause,
+    output reg  [63:0] mem_fault_tval,
+    // Stall request
+    output wire        mem_stall
+);
+    localparam MS_IDLE      = 3'd0;
+    localparam MS_DATA      = 3'd1;
+    localparam MS_DONE      = 3'd2;
+    localparam MS_AMO_READ  = 3'd3;
+    localparam MS_AMO_WRITE = 3'd4;
+    reg [2:0]  mstate;
+    reg [63:0] load_data;
+    reg        mem_active;
+    reg [63:0] pc_q;
+    reg [39:0] store_addr_q;
+    reg        lr_valid;
+    reg [39:0] lr_addr;
+    reg        is_sc_q;
+    reg        sc_failed;
+    reg [2:0]  funct3_q;
+    reg [4:0]  amo_funct5_q;
+    reg [63:0] rs2_data_q;
+    wire [39:0] eff_mem_addr = (phys_addr[0] !== 1'bx) ? phys_addr : alu_result[39:0];
+
+    wire [1:0]  clean_bresp = dmem_bresp;
+    wire [1:0]  clean_rresp = dmem_rresp;
+    wire [63:0] clean_pc_in = pc_in;
+
+    wire snoop_kills_lr = snoop_valid && (snoop_type != 2'b00) && (snoop_addr[39:6] == lr_addr[39:6]);
+    wire snoop_kills_sc = is_sc_q && snoop_valid && (snoop_type != 2'b00) && (snoop_addr[39:6] == store_addr_q[39:6]);
+    wire sc_fail = is_amo && (amo_funct5 == `AMO_SC) && !(lr_valid && !snoop_kills_lr && (lr_addr[39:3] == eff_mem_addr[39:3]));
+    wire mem_req_active = valid_in && (mem_read || mem_write || is_amo) &&
+                          !(mmu_page_fault || pmp_fault) && !sc_fail;
+
+    assign mem_stall  = (mem_active && (mstate != MS_DONE)) ||
+                        (valid_in && (mem_read || mem_write || is_amo) && mmu_trans_busy);
+    assign fwd_mem_data  = result;
+    assign fwd_mem_rd    = rd_out;
+    // Suppress forwarding while a memory transaction is in flight: 'result'
+    // still holds the PREVIOUS instruction's value until the transfer
+    // completes, and advertising it here would feed a dependent in execute
+    // with stale data for the whole bus latency.
+    assign fwd_mem_valid = valid_out && reg_write_out && !mem_active;
+
+    // Load data sign-extension
+    function [63:0] extend_load;
+        input [63:0] raw;
+        input [2:0]  f3;
+        case (f3)
+            3'b000: extend_load = {{56{raw[7]}},  raw[7:0]};   // LB
+            3'b001: extend_load = {{48{raw[15]}}, raw[15:0]};  // LH
+            3'b010: extend_load = {{32{raw[31]}}, raw[31:0]};  // LW
+            3'b011: extend_load = raw;                          // LD
+            3'b100: extend_load = {56'h0, raw[7:0]};           // LBU
+            3'b101: extend_load = {48'h0, raw[15:0]};          // LHU
+            3'b110: extend_load = {32'h0, raw[31:0]};          // LWU
+            default:extend_load = raw;
+        endcase
+    endfunction
+
+    // Write strobe from funct3
+    function [7:0] wstrb_from_f3;
+        input [2:0] f3;
+        case (f3)
+            3'b000: wstrb_from_f3 = 8'b0000_0001; // SB
+            3'b001: wstrb_from_f3 = 8'b0000_0011; // SH
+            3'b010: wstrb_from_f3 = 8'b0000_1111; // SW
+            3'b011: wstrb_from_f3 = 8'b1111_1111; // SD
+            default:wstrb_from_f3 = 8'b1111_1111;
+        endcase
+    endfunction
+
+    // 32-bit AMO compute function
+    function [31:0] calc_amo_32;
+        input [4:0]  af5;
+        input [31:0] old_v;
+        input [31:0] op_v;
+        case (af5)
+            `AMO_SWAP: calc_amo_32 = op_v;
+            `AMO_ADD:  calc_amo_32 = old_v + op_v;
+            `AMO_XOR:  calc_amo_32 = old_v ^ op_v;
+            `AMO_AND:  calc_amo_32 = old_v & op_v;
+            `AMO_OR:   calc_amo_32 = old_v | op_v;
+            `AMO_MIN:  calc_amo_32 = ($signed(old_v) < $signed(op_v)) ? old_v : op_v;
+            `AMO_MAX:  calc_amo_32 = ($signed(old_v) > $signed(op_v)) ? old_v : op_v;
+            `AMO_MINU: calc_amo_32 = (old_v < op_v) ? old_v : op_v;
+            `AMO_MAXU: calc_amo_32 = (old_v > op_v) ? old_v : op_v;
+            default:   calc_amo_32 = old_v + op_v;
+        endcase
+    endfunction
+
+    // 64-bit AMO compute function
+    function [63:0] calc_amo_64;
+        input [4:0]  af5;
+        input [63:0] old_v;
+        input [63:0] op_v;
+        case (af5)
+            `AMO_SWAP: calc_amo_64 = op_v;
+            `AMO_ADD:  calc_amo_64 = old_v + op_v;
+            `AMO_XOR:  calc_amo_64 = old_v ^ op_v;
+            `AMO_AND:  calc_amo_64 = old_v & op_v;
+            `AMO_OR:   calc_amo_64 = old_v | op_v;
+            `AMO_MIN:  calc_amo_64 = ($signed(old_v) < $signed(op_v)) ? old_v : op_v;
+            `AMO_MAX:  calc_amo_64 = ($signed(old_v) > $signed(op_v)) ? old_v : op_v;
+            `AMO_MINU: calc_amo_64 = (old_v < op_v) ? old_v : op_v;
+            `AMO_MAXU: calc_amo_64 = (old_v > op_v) ? old_v : op_v;
+            default:   calc_amo_64 = old_v + op_v;
+        endcase
+    endfunction
+
+    wire [31:0] amo_old_32 = (dmem_rdata >> {store_addr_q[2:0], 3'b000}) & 32'hFFFF_FFFF;
+    wire [31:0] amo_new_32 = calc_amo_32(amo_funct5_q, amo_old_32, rs2_data_q[31:0]);
+    wire [63:0] amo_old_64 = dmem_rdata;
+    wire [63:0] amo_new_64 = calc_amo_64(amo_funct5_q, amo_old_64, rs2_data_q);
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            dmem_awvalid    <= 1'b0;  dmem_awaddr  <= 40'h0;
+            dmem_wvalid     <= 1'b0;  dmem_wdata   <= 64'h0;  dmem_wstrb <= 8'h0;
+            dmem_bready     <= 1'b0;
+            dmem_arvalid    <= 1'b0;  dmem_araddr  <= 40'h0;
+            dmem_rready     <= 1'b0;
+            result          <= 64'h0;
+            rd_out          <= 5'h0;
+            reg_write_out   <= 1'b0;
+            valid_out       <= 1'b0;
+            load_data       <= 64'h0;
+            mem_active      <= 1'b0;
+            mstate          <= MS_IDLE;
+            pc_q            <= 64'h0;
+            store_addr_q    <= 40'h0;
+            lr_valid        <= 1'b0;
+            lr_addr         <= 40'h0;
+            is_sc_q         <= 1'b0;
+            sc_failed       <= 1'b0;
+            funct3_q        <= 3'h0;
+            amo_funct5_q    <= 5'h0;
+            rs2_data_q      <= 64'h0;
+            mem_fault       <= 1'b0;
+            mem_fault_pc    <= 64'h0;
+            mem_fault_cause <= 64'h0;
+            mem_fault_tval  <= 64'h0;
+        end else if (flush) begin
+            dmem_awvalid    <= 1'b0;  dmem_awaddr  <= 40'h0;
+            dmem_wvalid     <= 1'b0;  dmem_wdata   <= 64'h0;  dmem_wstrb <= 8'h0;
+            dmem_bready     <= 1'b0;
+            dmem_arvalid    <= 1'b0;  dmem_araddr  <= 40'h0;
+            dmem_rready     <= 1'b0;
+            result          <= 64'h0;
+            rd_out          <= 5'h0;
+            reg_write_out   <= 1'b0;
+            valid_out       <= 1'b0;
+            load_data       <= 64'h0;
+            mem_active      <= 1'b0;
+            mstate          <= MS_IDLE;
+            pc_q            <= 64'h0;
+            store_addr_q    <= 40'h0;
+            is_sc_q         <= 1'b0;
+            sc_failed       <= 1'b0;
+            funct3_q        <= 3'h0;
+            amo_funct5_q    <= 5'h0;
+            rs2_data_q      <= 64'h0;
+            mem_fault       <= 1'b0;
+            mem_fault_pc    <= 64'h0;
+            mem_fault_cause <= 64'h0;
+            mem_fault_tval  <= 64'h0;
+        end else begin
+            // Defect D-017 & D-018: Snoop invalidation of LR reservation and in-flight SC.
+            // Any write or invalidation snoop matching the 64-byte reservation line clears lr_valid.
+            // If an SC write is in-flight when snoop invalidation arrives, SC must fail.
+            if (snoop_valid && (snoop_type != 2'b00)) begin
+                if (snoop_addr[39:6] == lr_addr[39:6])
+                    lr_valid <= 1'b0;
+                if (is_sc_q && (snoop_addr[39:6] == store_addr_q[39:6]))
+                    sc_failed <= 1'b1;
+            end
+
+            case (mstate)
+                MS_IDLE: begin
+                    mem_fault <= 1'b0;
+                    if (valid_in && (mem_read || mem_write || is_amo) && (mmu_page_fault || pmp_fault)) begin
+                        mem_fault       <= 1'b1;
+                        mem_fault_pc    <= clean_pc_in;
+                        mem_fault_cause <= mmu_page_fault ? (mem_read ? 64'd13 : 64'd15) :
+                                           (mem_read ? 64'd5 : 64'd7); // 5=Load access fault, 7=Store/AMO access fault
+                        mem_fault_tval  <= mmu_page_fault ? mmu_fault_va : alu_result;
+                        valid_out       <= 1'b0;
+                        reg_write_out   <= 1'b0;
+                        mem_active      <= 1'b0;
+                        mstate          <= MS_IDLE;
+                    end else if (valid_in && (mem_read || mem_write || is_amo) && mmu_trans_busy) begin
+                        mem_active      <= 1'b1;
+                        mstate          <= MS_IDLE;
+                    end else if (valid_in && is_amo) begin
+                        funct3_q      <= funct3;
+                        amo_funct5_q  <= amo_funct5;
+                        rs2_data_q    <= rs2_data;
+                        if (amo_funct5 == `AMO_LR) begin
+                            // LR: Load Reserved
+                            dmem_arvalid  <= 1'b1;
+                            dmem_araddr   <= eff_mem_addr;
+                            pc_q          <= clean_pc_in;
+                            dmem_rready   <= 1'b1;
+                            mem_active    <= 1'b1;
+                            mstate        <= MS_DATA;
+                            rd_out        <= rd_in;
+                            reg_write_out <= reg_write;
+                            valid_out     <= 1'b0;
+                            if (snoop_valid && (snoop_type != 2'b00) && (snoop_addr[39:6] == eff_mem_addr[39:6])) begin
+                                lr_valid  <= 1'b0;
+                            end else begin
+                                lr_valid  <= 1'b1;
+                            end
+                            lr_addr       <= eff_mem_addr;
+                            is_sc_q       <= 1'b0;
+                        end else if (amo_funct5 == `AMO_SC) begin
+                            // SC: Store Conditional
+                            if (lr_valid && !snoop_kills_lr && (lr_addr[39:3] == eff_mem_addr[39:3])) begin
+                                lr_valid      <= 1'b0;
+                                sc_failed     <= 1'b0;
+                                dmem_awvalid  <= 1'b1;
+                                dmem_awaddr   <= eff_mem_addr;
+                                store_addr_q  <= eff_mem_addr;
+                                pc_q          <= clean_pc_in;
+                                dmem_wvalid   <= 1'b1;
+                                dmem_wdata    <= rs2_data << {alu_result[2:0], 3'b000};
+                                dmem_wstrb    <= wstrb_from_f3(funct3) << alu_result[2:0];
+                                dmem_bready   <= 1'b1;
+                                mem_active    <= 1'b1;
+                                mstate        <= MS_DATA;
+                                rd_out        <= rd_in;
+                                reg_write_out <= 1'b1;
+                                result        <= 64'd0; // 0 = SC success (tentative)
+                                valid_out     <= 1'b0;
+                                is_sc_q       <= 1'b1;
+                            end else begin
+                                lr_valid      <= 1'b0;
+                                result        <= 64'd1; // 1 = SC failure
+                                rd_out        <= rd_in;
+                                reg_write_out <= 1'b1;
+                                valid_out     <= 1'b1;
+                                mem_active    <= 1'b0;
+                                mstate        <= MS_IDLE;
+                                is_sc_q       <= 1'b0;
+                            end
+                        end else begin
+                            // Read-Modify-Write AMO (AMOADD, AMOSWAP, etc.)
+                            dmem_arvalid  <= 1'b1;
+                            dmem_araddr   <= eff_mem_addr;
+                            store_addr_q  <= eff_mem_addr;
+                            pc_q          <= clean_pc_in;
+                            dmem_rready   <= 1'b1;
+                            mem_active    <= 1'b1;
+                            mstate        <= MS_AMO_READ;
+                            rd_out        <= rd_in;
+                            reg_write_out <= reg_write;
+                            valid_out     <= 1'b0;
+                            is_sc_q       <= 1'b0;
+                        end
+                    end else if (valid_in && mem_write) begin
+                        funct3_q      <= funct3;
+                        amo_funct5_q  <= amo_funct5;
+                        rs2_data_q    <= rs2_data;
+                        dmem_awvalid  <= 1'b1;
+                        dmem_awaddr   <= eff_mem_addr;
+                        store_addr_q  <= eff_mem_addr;
+                        pc_q          <= clean_pc_in;
+                        dmem_wvalid   <= 1'b1;
+                        dmem_wdata    <= rs2_data
+                                         << {alu_result[2:0], 3'b000};
+                        dmem_wstrb    <= wstrb_from_f3(funct3)
+                                         << alu_result[2:0];
+                        dmem_bready   <= 1'b1;
+                        mem_active    <= 1'b1;
+                        mstate        <= MS_DATA;
+                        rd_out        <= rd_in;
+                        reg_write_out <= reg_write;
+                        result        <= alu_result;
+                        valid_out     <= 1'b0;
+                        is_sc_q       <= 1'b0;
+                    end else if (valid_in && mem_read) begin
+                        funct3_q      <= funct3;
+                        amo_funct5_q  <= amo_funct5;
+                        rs2_data_q    <= rs2_data;
+                        dmem_arvalid  <= 1'b1;
+                        dmem_araddr   <= eff_mem_addr;
+                        pc_q          <= clean_pc_in;
+                        dmem_rready   <= 1'b1;
+                        mem_active    <= 1'b1;
+                        mstate        <= MS_DATA;
+                        rd_out        <= rd_in;
+                        reg_write_out <= reg_write;
+                        valid_out     <= 1'b0;
+                        is_sc_q       <= 1'b0;
+                    end else begin
+                        result        <= alu_result;
+                        rd_out        <= rd_in;
+                        reg_write_out <= reg_write;
+                        valid_out     <= valid_in;
+                        mem_active    <= 1'b0;
+                        is_sc_q       <= 1'b0;
+                    end
+                end
+                MS_DATA: begin
+                    if (dmem_awready) dmem_awvalid <= 1'b0;
+                    if (dmem_wready)  dmem_wvalid  <= 1'b0;
+                    if (dmem_arready) dmem_arvalid <= 1'b0;
+                    if (dmem_bvalid && dmem_bready) begin
+                        dmem_bready <= 1'b0;
+                        mem_active  <= 1'b0;
+                        mstate      <= MS_IDLE;
+                        if (clean_bresp[1] == 1'b1 || clean_bresp[0] == 1'b1) begin
+                            mem_fault       <= 1'b1;
+                            mem_fault_pc    <= pc_q;
+                            mem_fault_cause <= 64'd7;
+                            mem_fault_tval  <= {24'h0, store_addr_q};
+                            valid_out       <= 1'b0;
+                            reg_write_out   <= 1'b0;
+                        end else begin
+                            valid_out       <= 1'b1;
+                            mem_fault       <= 1'b0;
+                            if (is_sc_q)
+                                result      <= (sc_failed || snoop_kills_sc) ? 64'd1 : 64'd0;
+                        end
+                    end else if (dmem_rvalid && dmem_rready) begin
+                        dmem_rready <= 1'b0;
+                        mem_active  <= 1'b0;
+                        mstate      <= MS_IDLE;
+                        if (clean_rresp[1] == 1'b1 || clean_rresp[0] == 1'b1) begin
+                            mem_fault       <= 1'b1;
+                            mem_fault_pc    <= pc_q;
+                            mem_fault_cause <= 64'd5;
+                            mem_fault_tval  <= {24'h0, dmem_araddr};
+                            valid_out       <= 1'b0;
+                            reg_write_out   <= 1'b0;
+                        end else begin
+                            load_data    <= dmem_rdata;
+                            result       <= extend_load(
+                                dmem_rdata >> {dmem_araddr[2:0], 3'b000},
+                                funct3_q);
+                            valid_out    <= 1'b1;
+                            mem_fault    <= 1'b0;
+                        end
+                    end
+                end
+                MS_AMO_READ: begin
+                    if (dmem_arready) dmem_arvalid <= 1'b0;
+                    if (dmem_rvalid) begin
+                        dmem_rready <= 1'b0;
+                        if (clean_rresp[1] == 1'b1 || clean_rresp[0] == 1'b1) begin
+                            mem_fault       <= 1'b1;
+                            mem_fault_pc    <= pc_q;
+                            mem_fault_cause <= 64'd5;
+                            mem_fault_tval  <= {24'h0, store_addr_q};
+                            valid_out       <= 1'b0;
+                            reg_write_out   <= 1'b0;
+                            mem_active      <= 1'b0;
+                            mstate          <= MS_IDLE;
+                        end else begin
+                            dmem_awvalid <= 1'b1;
+                            dmem_awaddr  <= store_addr_q;
+                            dmem_wvalid  <= 1'b1;
+                            dmem_bready  <= 1'b1;
+                            mstate       <= MS_AMO_WRITE;
+
+                            if (funct3_q == `AMO_W) begin
+                                result     <= {{32{amo_old_32[31]}}, amo_old_32};
+                                dmem_wdata <= {32'h0, amo_new_32} << {store_addr_q[2:0], 3'b000};
+                                dmem_wstrb <= 8'h0F << store_addr_q[2:0];
+                            end else begin
+                                result     <= amo_old_64;
+                                dmem_wdata <= amo_new_64;
+                                dmem_wstrb <= 8'hFF;
+                            end
+                        end
+                    end
+                end
+                MS_AMO_WRITE: begin
+                    if (dmem_awready) dmem_awvalid <= 1'b0;
+                    if (dmem_wready)  dmem_wvalid  <= 1'b0;
+                    if (dmem_bvalid) begin
+                        dmem_bready <= 1'b0;
+                        mem_active  <= 1'b0;
+                        mstate      <= MS_IDLE;
+                        if (clean_bresp[1] == 1'b1 || clean_bresp[0] == 1'b1) begin
+                            mem_fault       <= 1'b1;
+                            mem_fault_pc    <= pc_q;
+                            mem_fault_cause <= 64'd7;
+                            mem_fault_tval  <= {24'h0, store_addr_q};
+                            valid_out       <= 1'b0;
+                            reg_write_out   <= 1'b0;
+                        end else begin
+                            valid_out       <= 1'b1;
+                            mem_fault       <= 1'b0;
+                        end
+                    end
+                end
+                default: mstate <= MS_IDLE;
+            endcase
+        end
+    end
+endmodule
