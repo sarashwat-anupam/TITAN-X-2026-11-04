@@ -1,0 +1,71 @@
+===================================================================
+ SMVDU TITAN-X SoC — Multi-Core Linux OS Boot Bringup Testbench   
+ Platform: 4-Core RV64GC (Sv39 MMU + March C+ MBIST + ACLINT)     
+ Max Cycles: 40000000
+===================================================================
+
+�[B2L_WCOLL] cyc=1825773 base=0x0082200820 beat=0 data=0x2d74756f64747300 strb=0xff last=1
+[B2L_WISSUE] cyc=1825774 cnt=0 awaddr=0x0082200820 wdata=0x2d74756f64747300 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=1825775 cnt=0 awaddr=0x0082200820 wdata=0x2d74756f64747300 awrdy=0 wrdy=1
+[B2L_WCOLL] cyc=1825800 base=0x0082200828 beat=0 data=0x6d69740068746170 strb=0xff last=1
+[B2L_WISSUE] cyc=1825801 cnt=0 awaddr=0x0082200828 wdata=0x6d69740068746170 awrdy=1 wrdy=0
+[B2L_WISSUE] cyc=1825802 cnt=0 awaddr=0x0082200828 wdata=0x6d69740068746170 awrdy=0 wrdy=1
+[SIM INFO] 2000000 cycles elapsed | Console: 1 chars received...
+[SIM INFO] 4000000 cycles elapsed | Console: 1 chars received...
+
+O
+pOepneSnBSIB Iv 1v.12.2
+[BOOT_EVENT] OpenSBI v1.2 banner detected!
+
+ 
+    _ ______ _                                      _ ________ __ ______ __ _________
+ 
+  /  /_ __ [SIM INFO] 6000000 cycles elapsed | Console: 67 chars received...
+_\  \                                  /  /_ ______|_ |  _  _\ _\ _    _ |_|
+ 
+|  ||  |  |  || _| __ __ _    _ ____ __  __ __ _|  |( _(____ _|  || _|)_ )| || || |
+ 
+|  ||  |  |  ||  |' _' _\  \/  /_  _\  \' _' _\  \\ _\____ _\ |\ |  _  _<  <|  || |
+ 
+|  || _|__|_ ||  || _|)_ )|  |  _ __/_ /|  ||  || _|______)_ )|  || _|)_ )| || || _|_
+ 
+  \ _\______/_|/ |. _.__/_ /\ _\____|__||_ || _||__|________/_|/_|______/__/________|_|
+ 
+              |  || |
+ [SIM INFO] 8000000 cycles elapsed | Console: 299 chars received...
+
+              | _||_|
+
+
+
+[SIM INFO] 10000000 cycles elapsed | Console: 315 chars received...
+[SIM INFO] 12000000 cycles elapsed | Console: 315 chars received...
+[SIM INFO] 14000000 cycles elapsed | Console: 315 chars received...
+[SIM INFO] 16000000 cycles elapsed | Console: 315 chars received...
+[SIM INFO] 18000000 cycles elapsed | Console: 315 chars received...
+[SIM INFO] 20000000 cycles elapsed | Console: 315 chars received...
+[SIM INFO] 22000000 cycles elapsed | Console: 315 chars received...
+[SIM INFO] 24000000 cycles elapsed | Console: 315 chars received...
+[SIM INFO] 26000000 cycles elapsed | Console: 315 chars received...
+[SIM INFO] 28000000 cycles elapsed | Console: 315 chars received...
+[SIM INFO] 30000000 cycles elapsed | Console: 315 chars received...
+[SIM INFO] 32000000 cycles elapsed | Console: 315 chars received...
+[SIM INFO] 34000000 cycles elapsed | Console: 315 chars received...
+[SIM INFO] 36000000 cycles elapsed | Console: 315 chars received...
+[SIM INFO] 38000000 cycles elapsed | Console: 315 chars received...
+[SIM INFO] 40000000 cycles elapsed | Console: 315 chars received...
+
+[SIM INFO] Reached max cycle limit (40000000). Stopping simulation.
+
+===================================================================
+ TITAN-X Multi-Core Linux / OpenSBI Boot Verification Report       
+===================================================================
+ Simulation Cycles:        40000000
+ OpenSBI Banner:           ✅ DETECTED
+ 4-HART Enumeration:       ❌ NOT DETECTED
+ ACLINT-MSWI (IPI):        ❌ NOT DETECTED
+ ACLINT-MTIMER (Timer):    ❌ NOT DETECTED
+ S-Mode Payload Execution: ❌ NOT REACHED
+ Overall Bringup Status:   ❌ FAILED
+===================================================================
+
